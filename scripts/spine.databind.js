@@ -17,44 +17,127 @@ var DataBind = {
 
         $(el).find("*[data-bind]").each(function(index) {
             var element = $(this),
-                databind = element.data("bind").split(":"),
-                attribute = databind.length === 2 ? databind[0].trim() : null,
-                value = databind.length === 2 ? databind[1].trim() : null;
-
-            if (attribute === null) {
-                return;
-            }
-
-            Element.init({item: item, name: value, attribute: attribute, el: element});
+                databind = element.data("bind").split(",");
+                
+            var attributes = databind.map(function(item) {
+                var db = item.trim().split(":");
+                
+                return {
+                    name: db[0].trim(),
+                    value: db[1].trim()
+                }
+            });
+    
+            Element.init({item: item, attributes: attributes, el: element});
         });
     }
 }
 
 var Element = Spine.Controller.create({
-    events: {
-        "change": "change"
-    },
-
     init: function() {
-        this.update();
-        this.item.bind("update", this.proxy(this.update));
+        this.mapAttributes();
     },
 
-    change: function() {
-        this.item.updateAttribute(this.name,this.el.val());
-    },
+    mapAttributes: function() {
+        var i;
+        
+        for(i=0;i<this.attributes.length;i++) {
+            var attribute = this.attributes[i];
 
-    update: function() {
-        var value = typeof this.item[this.name] === "function" ? this.item[this.name]() : this.item[this.name],
-            tag = this.el[0].tagName;
+            switch(attribute.name) {
+                case "text":
+                case "value":
+                    this.update(attribute);
+                    break;
 
-        switch(this.attribute) {
-            case "text":
-                this.el.text(value);
-                break;
-            case "value":
-                this.el.val(value);
-                break;
+                case "click":
+                    this.click(attribute);
+                    break;
+
+                case "enable":
+                    this.enable(attribute);
+                    break;
+
+                case "visible":
+                    this.visible(attribute);
+                    break;
+            }
         }
+    },
+
+    enable: function(attribute) {
+        var controller = this;
+        var enable = function() {
+            var result = false;
+
+            with(controller.item) {
+                result = eval(attribute.value);
+            }
+
+            if (result) {
+                controller.el.removeAttr("disabled");
+            } else {
+                controller.el.attr("disabled", "disabled");
+            }
+        };
+        this.item.bind("update", this.proxy(enable));
+    },
+
+    update: function(attribute) {
+        var controller = this;
+        var update = function() {
+            var value = typeof controller.item[attribute.value] === "function" ? controller.item[attribute.value]() : controller.item[attribute.value],
+                tag = controller.el[0].tagName;
+
+            switch(attribute.name) {
+                case "text":
+                    controller.el.text(value);
+                    break;
+                case "value":
+                    controller.el.val(value);
+                    break;
+            }
+        };
+        update();
+        this.item.bind("update", this.proxy(update));
+
+        var change = function() {
+            controller.item.updateAttribute(attribute.value,controller.el.val());
+        }
+        this.el.bind("change", change);
+    },
+
+    click: function(attribute) {
+        var controller = this;
+        var click = function() {
+            switch(typeof this.item[attribute.value]) {
+                case "function":
+                    this.item[attribute.value]();
+                    break;
+
+                case "undefined":
+                    with(this.item) {
+                        eval(attribute.value);
+                    }
+            }
+        };
+
+        this.el.bind("click", this.proxy(click));
+    },
+
+    visible: function(attribute) {
+        var controller = this;
+        var visible = function() {
+            var result = controller.item[attribute.value]();
+
+            if (result) {
+                controller.el.show();
+            } else {
+                controller.el.hide();
+            }
+        }
+
+        visible();
+        this.item.bind("update", this.proxy(visible));
     }
 });
