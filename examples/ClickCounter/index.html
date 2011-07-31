@@ -1,19 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset='utf-8'>
+    <meta charset='utf-8'>
 
-  <title>nathanpalmer/spine.databind @ GitHub</title>
+    <title>nathanpalmer/spine.databind @ GitHub</title>
 
-  <link rel="stylesheet" type="text/css" href="../../style.css">
+    <link rel="stylesheet" type="text/css" href="../../style.css">
 
-  <script type="text/javascript" src="../../scripts/jquery-1.6.2.min.js"></script>
-  <script type="text/javascript" src="../../scripts/spine.js"></script>
-  <script type="text/javascript" src="../../scripts/spine.databind.js"></script>
-  <script type="text/javascript">
-      $(document).ready(function() {
-          var ClickCollection = Spine.Model.setup("Click", [ "numberOfClicks" ]);
-            
+    <script type="text/javascript" src="../../scripts/jquery-1.6.2.min.js"></script>
+    <script type="text/javascript" src="../../scripts/spine.js"></script>
+    <script type="text/javascript" src="../../scripts/spine.databind.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            var ClickCollection = Spine.Model.setup("Click", [ "numberOfClicks" ]);
+
             ClickCollection.extend(DataBind);
 
             ClickCollection.include({
@@ -31,8 +31,8 @@
             });
 
             var Clicker = ClickCollection.create({ numberOfClicks: 0 });
-      });
-  </script>
+        });
+    </script>
 </head>
 
 <body>
@@ -42,16 +42,23 @@
     <h1>Spine.DataBind</h1>
     <p><a href="http://knockoutjs.com">Knockout</a> style data-binding for <a href="http://maccman.github.com/spine/">Spine</a>.</p>
     
+    <h2>Demo</h2>
     <div id="content">
-       <div>You've clicked <span data-bind="text: numberOfClicks">&nbsp;</span> times</div>
- 
+        <div>You've clicked <span data-bind="text: numberOfClicks">&nbsp;</span> times</div>
+
         <button data-bind="click: registerClick, enable: !hasClickedTooManyTimes()">Click me</button>
- 
+
         <div data-bind="visible: hasClickedTooManyTimes">
             That's too many clicks! Please stop before you wear out your fingers.
             <button data-bind="click: updateClicks(0)">Reset clicks</button>
         </div>
     </div>
+
+    <h2>Html</h2>
+    <script src="https://gist.github.com/1116275.js?file=gistfile1.html"></script>
+    
+    <h2>JavaScript</h2>
+    <script src="https://gist.github.com/1116274.js?file=gistfile1.js"></script>
   </div>
   
 </body>
