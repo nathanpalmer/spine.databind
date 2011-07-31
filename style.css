@@ -26,3 +26,9 @@ a { color: #3b2a1b; }
 .download { float: right; }
 hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
 .footer { text-align:center; padding-top:30px; font-style: italic; }
+
+#content {
+    background-color: #e3d0ab;
+    padding: 15px;
+    border: 1px solid #3b2a1b;
+}
