@@ -18,7 +18,7 @@ var DataBind = {
         $(el).find("*[data-bind]").each(function(index) {
             var element = $(this),
                 databind = element.data("bind").split(",");
-                
+
             var attributes = databind.map(function(item) {
                 var db = item.trim().split(":");
                 
@@ -30,7 +30,9 @@ var DataBind = {
     
             Element.init({item: item, attributes: attributes, el: element});
         });
-    }
+    },
+
+    Binders: {}
 }
 
 var Element = Spine.Controller.create({
@@ -40,10 +42,32 @@ var Element = Spine.Controller.create({
 
     mapAttributes: function() {
         var i;
+
+        for(var prop in DataBind.Binders) {
+            if (DataBind.Binders.hasOwnProperty(prop)) {
+                var binder = DataBind.Binders[prop];
+                var binderAttributes = { length: 0 };
+                this.attributes.forEach(function(attribute) {
+                    if (binder.keys.some(function(k) {
+                        return k === attribute.name;
+                    })) {
+                        binderAttributes[attribute.name] = attribute.value;
+                        binderAttributes.length++;
+                    };
+                });
+
+                if (binderAttributes.length) {
+                    binder.init({el: this.el, item: this.item, attributes: binderAttributes});
+                }
+            }
+        }
         
         for(i=0;i<this.attributes.length;i++) {
             var attribute = this.attributes[i];
 
+            
+
+/*
             switch(attribute.name) {
                 case "text":
                 case "value":
@@ -70,6 +94,7 @@ var Element = Spine.Controller.create({
                     this.submit(attribute);
                     break;
             }
+*/
         }
     },
 
@@ -181,4 +206,47 @@ var Element = Spine.Controller.create({
         visible();
         this.item.bind("update", this.proxy(visible));
     }
+});
+
+DataBind.Binders.Update = Spine.Controller.create({
+    events: {
+        "change": "change"
+    },
+
+    init: function(atts) {
+        this.item.bind("update", this.proxy(this.update));
+        if (this.attributes["valueUpdate"] === '"afterkeydown"') {
+            this.el.bind("keyup", this.proxy(this.change));
+        }
+    },
+
+    change: function() {
+        switch(this.el[0].tagName) {
+            case "INPUT":
+                this.item.updateAttribute(this.attributes["value"],this.el.val());
+                break;
+        }
+    },
+
+    update: function() {
+        var value;
+
+        switch(this.el[0].tagName) {
+            case "INPUT":
+                value = typeof this.item[this.attributes["value"]] === "function"
+                        ? this.item[this.attributes["value"]]()
+                        : this.item[this.attributes["value"]];
+                this.el.val(value);
+                break;
+
+            default:
+                value = typeof this.item[this.attributes["text"]] === "function"
+                        ? this.item[this.attributes["text"]]()
+                        : this.item[this.attributes["text"]];
+                this.el.text(value);
+                break;
+        }
+    }
+},{
+    keys: [ "text", "value", "valueUpdate" ]
 });
