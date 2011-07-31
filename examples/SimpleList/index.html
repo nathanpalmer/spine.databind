@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+
+    <title>nathanpalmer/spine.databind @ GitHub</title>
+
+    <link rel="stylesheet" type="text/css" href="../../style.css">
+
+    <script type="text/javascript" src="../../scripts/jquery-1.6.2.min.js"></script>
+    <script type="text/javascript" src="../../scripts/spine.js"></script>
+    <script type="text/javascript" src="../../scripts/spine.databind.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            var ItemCollection = Spine.Model.setup("Item", [ "itemToAdd", "items" ]);
+            ItemCollection.extend(DataBind);
+
+            ItemCollection.include({
+                addItem: function() {
+                    if (this.itemToAdd != "") { 
+                        this.items.push(this.itemToAdd);
+                        this.itemToAdd = "";
+                        this.save();
+                    }
+                } 
+            });
+
+            var Item = ItemCollection.create({ itemToAdd: "", items: [ "Alpha", "Beta", "Gamma" ] });
+        });
+    </script>
+</head>
+
+<body>
+  <a href="http://github.com/nathanpalmer/spine.databind"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+
+  <div id="container">
+    <h1>Spine.DataBind</h1>
+    <p><a href="http://knockoutjs.com">Knockout</a> style data-binding for <a href="http://maccman.github.com/spine/">Spine</a>.</p>
+    
+    <h2>Demo</h2>
+    <div id="content">
+<form data-bind="submit: addItem">
+    New item:
+    <input data-bind='value: itemToAdd, valueUpdate: "afterkeydown"' />
+    <button type="submit" data-bind="enable: itemToAdd.length > 0">Add</button>
+    <p>Your items:</p>
+    <select multiple="multiple" width="50" data-bind="options: items"> </select>
+</form>
+    </div>
+
+    <h2>Html</h2>
+    <script src="https://gist.github.com/1116331.js?file=gistfile1.html"></script>
+    
+    <h2>JavaScript</h2>
+    <script src="https://gist.github.com/1116330.js?file=gistfile1.txt"></script>
+  </div>
+  
+</body>
+</html>

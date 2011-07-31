@@ -61,8 +61,39 @@ var Element = Spine.Controller.create({
                 case "visible":
                     this.visible(attribute);
                     break;
+
+                case "options":
+                    this.option(attribute);
+                    break;
+
+                case "submit":
+                    this.submit(attribute);
+                    break;
             }
         }
+    },
+
+    submit: function(attribute) {
+        var controller = this;
+        var submit = function(e) {
+            e.preventDefault();
+            controller.item[attribute.value]();
+        };
+        this.el.submit(this.proxy(submit));
+    },
+
+    option: function(attribute) {
+        var controller = this;
+        var options = function() {
+            controller.el.html('');
+            var array = controller.item[attribute.value];
+            for(var i=0;i<array.length;i++) {
+                var item = array[i];
+                controller.el.append("<option value='" + item + "'>" + item + "</option>");
+            }
+        };
+        options();
+        this.item.bind("update", this.proxy(options));
     },
 
     enable: function(attribute) {
@@ -80,11 +111,13 @@ var Element = Spine.Controller.create({
                 controller.el.attr("disabled", "disabled");
             }
         };
+        enable();
         this.item.bind("update", this.proxy(enable));
     },
 
     update: function(attribute) {
         var controller = this;
+        var valueUpdate = this.attributes.filter(function(item) { return item.name === "valueUpdate" });
         var update = function() {
             var value = typeof controller.item[attribute.value] === "function" ? controller.item[attribute.value]() : controller.item[attribute.value],
                 tag = controller.el[0].tagName;
@@ -105,6 +138,14 @@ var Element = Spine.Controller.create({
             controller.item.updateAttribute(attribute.value,controller.el.val());
         }
         this.el.bind("change", change);
+
+        if (valueUpdate.length === 1) {
+            switch(valueUpdate[0].value) {
+                case "\"afterkeydown\"":
+                    this.el.bind("keyup", change);
+                    break;
+            }
+        }
     },
 
     click: function(attribute) {
