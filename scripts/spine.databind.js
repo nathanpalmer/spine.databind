@@ -20,11 +20,14 @@ var DataBind = {
                 databind = element.data("bind").split(",");
 
             var attributes = databind.map(function(item) {
-                var db = DataBind.trim(item).split(":");
+                var fullString = DataBind.trim(item),
+                    index = fullString.indexOf(":"),
+                    name = DataBind.trim(fullString.substr(0,index)),
+                    value = DataBind.trim(fullString.substr(index+1));
                 
                 return {
-                    name: DataBind.trim(db[0]),
-                    value: DataBind.trim(db[1])
+                    name: name,
+                    value: value
                 }
             });
 
@@ -49,52 +52,30 @@ var DataBind = {
         });
     },
 
-    Binders: {}
-};
+    eval: function(item,value) {
+        var result;
 
-DataBind.Binders.Update = Spine.Controller.create({
-    events: {
-        "change": "change"
-    },
-
-    init: function(atts) {
-        this.item.bind("update", this.proxy(this.update));
-        if (this.attributes["valueUpdate"] === '"afterkeydown"') {
-            this.el.bind("keyup", this.proxy(this.change));
-        }
-        this.update();
-    },
-
-    change: function() {
-        switch(this.el[0].tagName) {
-            case "INPUT":
-                this.item.updateAttribute(this.attributes["value"],this.el.val());
+        switch(typeof item[value]) {
+            case "function":
+                result = item[value]();
                 break;
-        }
-    },
 
-    update: function() {
-        var value;
-
-        switch(this.el[0].tagName) {
-            case "INPUT":
-                value = typeof this.item[this.attributes["value"]] === "function"
-                        ? this.item[this.attributes["value"]]()
-                        : this.item[this.attributes["value"]];
-                this.el.val(value);
+            case "undefined":
+                with(item) {
+                    result = eval(value);
+                }
                 break;
 
             default:
-                value = typeof this.item[this.attributes["text"]] === "function"
-                        ? this.item[this.attributes["text"]]()
-                        : this.item[this.attributes["text"]];
-                this.el.text(value);
+                result = item[value];
                 break;
         }
-    }
-},{
-    keys: [ "text", "value", "valueUpdate" ]
-});
+
+        return result;
+    },
+
+    Binders: {}
+};
 
 DataBind.Binders.Options = Spine.Controller.create({
     init: function() {
@@ -107,14 +88,18 @@ DataBind.Binders.Options = Spine.Controller.create({
     },
 
     update: function() {
-        var array = this.item[this.attributes["options"]];
-        var options = this.el.children('option');
+        var array = this.item[this.attributes["options"]],
+            selectedOptions = typeof this.attributes["selectedOptions"] === "undefined" ? [] : DataBind.eval(this.item, this.attributes["selectedOptions"]),
+            options = this.el.children('option'),
+            value = this.item[this.attributes["value"]];
+
         for(var i=0;i<array.length;i++) {
             var item = array[i];
             var option = options.length > i ? options[i] : null;
+            var selected = selectedOptions.indexOf(item) >= 0;
 
             if (option === null) {
-                this.el.append("<option value='" + item + "'>" + item + "</option>");
+                this.el.append("<option value='" + item + "'" + (selected ? "selected='selected'" : "") + ">" + item + "</option>");
             } else {
                 if (option.text !== item) {
                     option.text = item;
@@ -143,6 +128,62 @@ DataBind.Binders.Options = Spine.Controller.create({
     keys: [ "options", "selectedOptions" ]
 });
 
+
+DataBind.Binders.Update = Spine.Controller.create({
+    events: {
+        "change": "change"
+    },
+
+    init: function(atts) {
+        this.item.bind("update", this.proxy(this.update));
+        if (this.attributes["valueUpdate"] === '"afterkeydown"') {
+            this.el.bind("keyup", this.proxy(this.change));
+        }
+        this.update();
+    },
+
+    change: function() {
+        switch(this.el[0].tagName) {
+            case "INPUT":
+            case "SELECT":
+            case "TEXTAREA":
+                this.item.updateAttribute(this.attributes["value"],this.el.val());
+                break;
+            default:
+                this.item.updateAttribute(this.attributes["value"],this.el.text());
+                break;
+        }
+    },
+
+    update: function() {
+        var value;
+
+        switch(this.el[0].tagName) {
+            case "INPUT":
+            case "TEXTAREA":
+                value = DataBind.eval(this.item, this.attributes["value"]);
+                this.el.val(value);
+                break;
+
+            case "SELECT":
+                value = DataBind.eval(this.item, this.attributes["value"]);
+                this.el.find("option[value=" + value + "]").attr("selected", "selected");
+                break;
+
+            default:
+                value = DataBind.eval(this.item, this.attributes["text"]);
+                if (typeof value === "object" && value.constructor === Array) {
+                    this.el.text(value.join(","));
+                } else {
+                    this.el.text(value);    
+                } 
+                break;
+        }
+    }
+},{
+    keys: [ "text", "value", "valueUpdate" ]
+});
+
 DataBind.Binders.Enable = Spine.Controller.create({
     init: function() {
         this.update();
@@ -150,11 +191,7 @@ DataBind.Binders.Enable = Spine.Controller.create({
     },
 
     update: function() {
-        var result = false;
-
-        with(this.item) {
-            result = eval(this.attributes["enable"]);
-        }
+        var result = DataBind.eval(this.item, this.attributes["enable"]);
 
         if (result) {
             this.el.removeAttr("disabled");
@@ -173,7 +210,7 @@ DataBind.Binders.Submit = Spine.Controller.create({
 
    submit: function(e) {
         e.preventDefault();
-        this.item[this.attributes["submit"]]();
+        DataBind.eval(this.item, this.attributes["submit"]);
    }
 }, {
     keys: [ "submit" ]
@@ -185,16 +222,7 @@ DataBind.Binders.Click = Spine.Controller.create({
     },
 
     click: function() {
-        switch(typeof this.item[this.attributes["click"]]) {
-            case "function":
-                this.item[this.attributes["click"]]();
-                break;
-
-            case "undefined":
-                with(this.item) {
-                    eval(this.attributes["click"]);
-                }
-        }
+        DataBind.eval(this.item, this.attributes["click"]);
     }
 }, {
     keys: [ "click" ]
@@ -207,7 +235,7 @@ DataBind.Binders.Visible = Spine.Controller.create({
     },
 
     update: function() {
-        var result = this.item[this.attributes["visible"]]();
+        var result = DataBind.eval(this.item, this.attributes["visible"]);
 
         if (result) {
             this.el.show();
@@ -217,4 +245,48 @@ DataBind.Binders.Visible = Spine.Controller.create({
     }
 }, {
     keys: [ "visible" ]
-})
+});
+
+DataBind.Binders.Checked = Spine.Controller.create({
+    events: {
+        "change": "change"    
+    },
+
+    type: null,
+
+    init: function() {
+        this.type = this.el.attr("type");
+        this.update();
+        this.item.bind("update", this.proxy(this.update));
+    },
+
+    change: function() {
+        if (this.type === "radio") {
+            this.item.updateAttribute(this.attributes["checked"], this.el.val());
+        } else {
+            var value = this.el.attr("checked") === "checked";
+            this.item.updateAttribute(this.attributes["checked"], value);
+        }
+    },
+
+    update: function() {
+        var result = DataBind.eval(this.item,this.attributes["checked"]),
+            value = this.el.val();
+
+        if (this.type === "radio") {
+            if (result !== value) {
+                this.el.removeAttr("checked");
+            } else {
+                this.el.attr("checked", "checked");
+            }
+        } else {
+            if (!result) {
+                this.el.removeAttr("checked");
+            } else {
+                this.el.attr("checked", "checked");
+            }
+        }
+    }
+}, {
+    keys: [ "checked" ]
+});
