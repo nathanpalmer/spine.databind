@@ -100,18 +100,47 @@ DataBind.Binders.Options = Spine.Controller.create({
     init: function() {
         this.item.bind("update", this.proxy(this.update));
         this.update();
+
+        if (typeof this.attributes["selectedOptions"] !== "undefined") {
+            this.el.bind("change", this.proxy(this.change));
+        }
     },
 
     update: function() {
-        this.el.html('');
         var array = this.item[this.attributes["options"]];
+        var options = this.el.children('option');
         for(var i=0;i<array.length;i++) {
             var item = array[i];
-            this.el.append("<option value='" + item + "'>" + item + "</option>");
+            var option = options.length > i ? options[i] : null;
+
+            if (option === null) {
+                this.el.append("<option value='" + item + "'>" + item + "</option>");
+            } else {
+                if (option.text !== item) {
+                    option.text = item;
+                }
+            }
         }
+        if (options.length > array.length) {
+            for(var j=array.length;j<options.length;j++) {
+                $(options[j]).remove();
+            }
+        }
+    },
+
+    change: function(e) {
+        var item = this.item,
+            prop = this.attributes["selectedOptions"];
+
+        item[prop] = [];
+        this.el.find("option:selected").each(function() {
+             item[prop].push($(this).text());
+        });
+        this.item.save();
     }
+
 }, {
-    keys: [ "options" ]
+    keys: [ "options", "selectedOptions" ]
 });
 
 DataBind.Binders.Enable = Spine.Controller.create({
