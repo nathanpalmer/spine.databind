@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+
+    <title>nathanpalmer/spine.databind @ GitHub</title>
+
+    <link rel="stylesheet" type="text/css" href="../../style.css">
+
+    <script type="text/javascript" src="../../scripts/jquery-1.6.2.min.js"></script>
+    <script type="text/javascript" src="../../scripts/spine.js"></script>
+    <script type="text/javascript" src="../../scripts/spine.databind.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            var ItemCollection = Spine.Model.setup("Item", [ "itemToAdd", "allItems", "selectedItems" ]);
+            ItemCollection.extend(DataBind);
+
+            ItemCollection.include({
+                addItem: function() {
+                    if (this.itemToAdd != "") { 
+                        this.allItems.push(this.itemToAdd);
+                        this.itemToAdd = "";
+                        this.save();
+                    }
+                },
+                removeSelected: function() {
+                    var allItems = this.allItems;
+                    this.selectedItems.forEach(function(item) {
+                        var index = allItems.indexOf(item);
+                        if (index >= 0) {
+                            allItems.splice(index,1);
+                        }
+                    });
+                    this.selectedItems = [];
+                    this.save();
+                },
+                sort: function() {
+                    this.allItems.sort();
+                    this.save();
+                }
+            });
+
+            var Item = ItemCollection.create({ itemToAdd: "", allItems: [ "Fries", "Eggs Benedict", "Ham" ], selectedItems: [] });
+        });
+    </script>
+</head>
+
+<body>
+  <a href="http://github.com/nathanpalmer/spine.databind"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+
+  <div id="container">
+    <h1>Spine.DataBind</h1>
+    <p><a href="http://knockoutjs.com">Knockout</a> style data-binding for <a href="http://maccman.github.com/spine/">Spine</a>.</p>
+    
+    <h2>Demo</h2>
+    <div id="content">
+        <form data-bind="submit:addItem">
+            Add item: <input type="text" data-bind='value:itemToAdd, valueUpdate: "afterkeydown"' />
+            <button type="submit" data-bind="enable: itemToAdd.length > 0">Add</button>
+        </form>
+         
+        <p>Your values:</p>
+        <select multiple="multiple" height="5" data-bind="options:allItems, selectedOptions:selectedItems"> </select>
+         
+        <div>
+            <button data-bind="click: removeSelected, enable: selectedItems.length > 0">Remove</button>
+            <button data-bind="click: sort, enable: allItems.length > 1">Sort</button>
+        </div>
+    </div>
+
+    <h2>Html</h2>
+    <script src="https://gist.github.com/1116331.js?file=gistfile1.html"></script>
+    
+    <h2>JavaScript</h2>
+    <script src="https://gist.github.com/1116330.js?file=gistfile1.txt"></script>
+  </div>
+  
+</body>
+</html>
