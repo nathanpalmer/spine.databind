@@ -2,7 +2,15 @@ describe("Spine.DataBind", function() {
 	var PersonCollection;
 
 	beforeEach(function() {
-		PersonCollection = Spine.Model.setup("Person", [ "firstName", "lastName", "phoneNumbers", "phoneNumbersSelected" ]);
+		PersonCollection = Spine.Model.setup("Person", [ 
+			"firstName", 
+			"lastName", 
+			"phoneNumbers", 
+			"phoneNumbersSelected",
+			"person",
+			"title"
+		]);
+
 		PersonCollection.extend(DataBind);
 		
 	});
@@ -114,6 +122,208 @@ describe("Spine.DataBind", function() {
 			expect(Person.phoneNumbersSelected.length).toBe(1);
 			expect(Person.phoneNumbersSelected[0]).toBe(Person.phoneNumbers[1]);
 		});
+	});
+
+	describe("Click", function() {
+		var Person;
+
+		beforeEach(function() {
+			PersonCollection.include({
+				resetName: function() {
+					this.firstName = "Reset";
+					this.save();
+				}
+			});
+			setFixtures("<input id='reset' type='button' value='reset' data-bind='click: resetName'/>");
+			Person = PersonCollection.create({ 
+				firstName: "Nathan", 
+				lastName: "Palmer"
+			});
+		});
+
+		it("should reset name", function() {
+			expect(Person.firstName).toBe("Nathan");
+
+			$('#reset').click();
+
+			expect(Person.firstName).toBe("Reset");
+		});
+	});
+
+	describe("Enable", function() {
+		var Person;
+
+		beforeEach(function() {
+			PersonCollection.include({
+				phoneNumberCount: function() {
+					return this.phoneNumbers.length;
+				},
+				reset: function() {
+					this.phoneNumbers = [];
+					this.save();
+				}
+			});
+			setFixtures("<input id='reset' type='button' value='reset' data-bind='enable: phoneNumberCount'/>");
+			Person = PersonCollection.create({ 
+				firstName: "Nathan", 
+				lastName: "Palmer",
+				phoneNumbers: []
+			});
+		});
+
+		it("should start out disabled", function() {
+			var reset = $('#reset');
+			expect(reset.attr('disabled')).toBe('disabled');
+		});
+
+		it("should enable when phone numbers present", function() {
+			Person.phoneNumbers.push("555-555-9090");
+			Person.save();
+
+			var reset = $('#reset');
+			expect(reset.attr('disabled')).toBe(undefined);
+		});
+	});
+
+	describe("Visible", function() {
+		var Person;
+
+		beforeEach(function() {
+			PersonCollection.include({
+				phoneNumberCount: function() {
+					return this.phoneNumbers.length;
+				},
+				reset: function() {
+					this.phoneNumbers = [];
+					this.save();
+				}
+			});
+			setFixtures("<input id='reset' type='button' value='reset' data-bind='visible: phoneNumberCount'/>");
+			Person = PersonCollection.create({ 
+				firstName: "Nathan", 
+				lastName: "Palmer",
+				phoneNumbers: []
+			});
+		});
+
+		it("should start out hidden", function() {
+			var reset = $('#reset');
+			expect(reset.css('display')).toBe('none');
+		});
+
+		it("should display when phone numbers present", function() {
+			Person.phoneNumbers.push("555-555-9090");
+			Person.save();
+
+			var reset = $('#reset');
+			expect(reset.css('display')).toBe('inline-block');
+		});
+	});
+
+	describe("Submit", function() {
+		var Person;
+
+		beforeEach(function() {
+			PersonCollection.include({
+				currentNumber: "",
+
+				addNumber: function() {
+					this.phoneNumbers.push(this.currentNumber);	
+				}
+			});
+
+			setFixtures([
+				"<form data-bind='submit: addNumber'>",
+					"<input type='text' data-bind='value: currentNumber, valueUpdate: \"afterkeydown\"'/>",
+					"<input type='submit' id='submit'/>",
+				"</form>"
+			].join(""));
+
+			Person = PersonCollection.create({ 
+				firstName: "Nathan", 
+				lastName: "Palmer",
+				phoneNumbers: []
+			});
+		});
+
+		it("should capture submit event", function() {
+			Person.currentNumber = "555-555-9090";
+			Person.save();
+
+			$('#submit').click();
+
+			expect(Person.phoneNumbers.length).toBe(1);
+			expect(Person.phoneNumbers[0]).toBe("555-555-9090");
+		});
+	});
+
+	describe("Checked", function() {
+		var Person;
+
+		beforeEach(function() {
+			setFixtures([
+				"<form data-bind='submit: addNumber'>",
+					"<input type='checkbox' data-bind='checked: person' id='person'/>",
+					"<input type='submit' id='submit'/>",
+				"</form>"
+			].join(""));
+
+			Person = PersonCollection.create({ 
+				firstName: "Nathan", 
+				lastName: "Palmer",
+				person: true
+			});
+		});
+
+		it("should bind to person", function() {
+			var person = $('#person');
+			expect(person.attr('checked')).toBe('checked');
+		});
+
+		it("should change when model is updated", function() {
+			Person.person = false;
+			Person.save();
+
+			var person = $('#person');
+			expect(person.attr('checked')).toBe(undefined);
+		})
+	});
+
+	describe("Radio", function() {
+		var Person;
+
+		beforeEach(function() {
+			setFixtures([
+				"<form data-bind='submit: addNumber'>",
+					"<input type='radio' data-bind='checked: title' value='Mr' id='mr'/>",
+					"<input type='radio' data-bind='checked: title' value='Mrs' id='mrs'/>",
+					"<input type='submit' id='submit'/>",
+				"</form>"
+			].join(""));
+
+			Person = PersonCollection.create({ 
+				firstName: "Nathan", 
+				lastName: "Palmer",
+				title: "Mr"
+			});
+		});
+
+		it("should bind to mr", function() {
+			var mr = $('#mr');
+			var mrs = $('#mrs');
+			expect(mr.attr('checked')).toBe('checked');
+			expect(mrs.attr('checked')).toBe(undefined);
+		});
+
+		it("should change when model is updated", function() {
+			Person.title = "Mrs";
+			Person.save();
+
+			var mr = $('#mr');
+			var mrs = $('#mrs');
+			expect(mr.attr('checked')).toBe(undefined);
+			expect(mrs.attr('checked')).toBe('checked');
+		})
 	});
 	
 });
