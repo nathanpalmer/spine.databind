@@ -1,5 +1,5 @@
 describe("Spine.DataBind", function() {
-	var PersonCollection;
+	var PersonCollection, PersonController;
 
 	beforeEach(function() {
 		PersonCollection = Spine.Model.setup("Person", [ 
@@ -11,12 +11,17 @@ describe("Spine.DataBind", function() {
 			"title"
 		]);
 
-		PersonCollection.extend(DataBind);
-		
+		PersonController = Spine.Controller.create({
+			init: function() {
+				this.initializeBindings(this.model);
+			}
+		});
+
+		PersonController.include(DataBind);
 	});
 
 	describe("Update", function() {
-		var Person;
+		var Person, Controller;
 
 		beforeEach(function() {
 			setFixtures([
@@ -26,7 +31,19 @@ describe("Spine.DataBind", function() {
 				"<input type='textarea' id='firstNameTextArea' data-bind='value: firstName'/>",
 				"<select id='firstNameSelect' data-bind='value: firstName'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>"
 			].join(""));
+
+			PersonController.include({
+				bindings: {
+					"text #firstNameSpan":"firstName",
+					"text #firstNameDiv":"firstName",
+					"value #firstName":"firstName",
+					"value #firstNameTextArea":"firstName",
+					"value #firstNameSelect":"firstName"
+				}
+			});
+
 			Person = PersonCollection.create({ firstName: "Nathan", lastName: "Palmer" });
+			Controller = PersonController.init({ model:Person });
 		});
 
 		it("should bind span", function() {
@@ -89,8 +106,9 @@ describe("Spine.DataBind", function() {
 
 			expect(Person.firstName).toBe("Eric");
 		});
-	});
 
+	});
+/*
 	describe("Options", function() {
 		var Person;
 
@@ -325,5 +343,5 @@ describe("Spine.DataBind", function() {
 			expect(mrs.attr('checked')).toBe('checked');
 		})
 	});
-	
+*/
 });
