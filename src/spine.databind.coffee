@@ -115,10 +115,28 @@ Enable =
 			el.removeAttr("disabled")
 		else
 			el.attr("disabled","disabled")
-		
 
+Visible = 
+	keys: [ "visible" ]
+
+	bind: (operators,model,el) ->
+		model.bind("update", => @update(operators,model,el))
+		@update(operators,model,el)
+
+	unbind: (operators,model,el) ->
+		model.unbind("update")
+
+	update: (operators,model,el) ->
+		operator = operators.filter((e) -> e.name is "visible")[0]
+		result = DataBind.eval(model,operator.property)
+
+		if result
+			el.show()
+		else
+			el.hide()
+			
 DataBind =
-	binders: [ Update, Options, Click, Enable ]
+	binders: [ Update, Options, Click, Enable, Visible ]
 
 	initializeBindings: (args...) ->
 		@trigger "destroy-bindings"

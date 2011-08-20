@@ -424,41 +424,93 @@ describe("Spine.DataBind", function() {
 		});	
 	});
 	
+	describe("Visible", function() {
 
-	xdescribe("Visible", function() {
-		var Person;
+		describe("with bindings", function() {
+			var Person;
 
-		beforeEach(function() {
-			PersonCollection.include({
-				phoneNumberCount: function() {
-					return this.phoneNumbers.length;
-				},
-				reset: function() {
-					this.phoneNumbers = [];
-					this.save();
-				}
+			beforeEach(function() {
+				PersonCollection.include({
+					phoneNumberCount: function() {
+						return this.phoneNumbers.length;
+					},
+					reset: function() {
+						this.phoneNumbers = [];
+						this.save();
+					}
+				});
+
+				setFixtures("<input id='reset' type='button' value='reset'/>");
+				
+				Person = PersonCollection.create({ 
+					firstName: "Nathan", 
+					lastName: "Palmer",
+					phoneNumbers: []
+				});
+
+				PersonController.include({
+					bindings: {
+						"visible input":"phoneNumberCount"
+					}
+				});
+
+				Controller = PersonController.init({ el: 'body', model:Person });
 			});
-			setFixtures("<input id='reset' type='button' value='reset' data-bind='visible: phoneNumberCount'/>");
-			Person = PersonCollection.create({ 
-				firstName: "Nathan", 
-				lastName: "Palmer",
-				phoneNumbers: []
+
+			it("should start out hidden", function() {
+				var reset = $('#reset');
+				expect(reset.css('display')).toBe('none');
+			});
+
+			it("should display when phone numbers present", function() {
+				Person.phoneNumbers.push("555-555-9090");
+				Person.save();
+
+				var reset = $('#reset');
+				expect(reset.css('display')).toBe('inline-block');
 			});
 		});
 
-		it("should start out hidden", function() {
-			var reset = $('#reset');
-			expect(reset.css('display')).toBe('none');
-		});
+		describe("with data-bind", function() {
+			var Person;
 
-		it("should display when phone numbers present", function() {
-			Person.phoneNumbers.push("555-555-9090");
-			Person.save();
+			beforeEach(function() {
+				PersonCollection.include({
+					phoneNumberCount: function() {
+						return this.phoneNumbers.length;
+					},
+					reset: function() {
+						this.phoneNumbers = [];
+						this.save();
+					}
+				});
 
-			var reset = $('#reset');
-			expect(reset.css('display')).toBe('inline-block');
-		});
+				setFixtures("<input id='reset' type='button' value='reset' data-bind='visible: phoneNumberCount'/>");
+				
+				Person = PersonCollection.create({ 
+					firstName: "Nathan", 
+					lastName: "Palmer",
+					phoneNumbers: []
+				});
+
+				Controller = PersonController.init({ el: 'body', model:Person });
+			});
+
+			it("should start out hidden", function() {
+				var reset = $('#reset');
+				expect(reset.css('display')).toBe('none');
+			});
+
+			it("should display when phone numbers present", function() {
+				Person.phoneNumbers.push("555-555-9090");
+				Person.save();
+
+				var reset = $('#reset');
+				expect(reset.css('display')).toBe('inline-block');
+			});
+		});	
 	});
+	
 
 	xdescribe("Submit", function() {
 		var Person;
