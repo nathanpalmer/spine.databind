@@ -20,217 +20,256 @@ describe("Spine.DataBind", function() {
 		PersonController.include(DataBind);
 	});
 
-	describe("Update w/bindings", function() {
-		var Person, Controller;
+	describe("Update", function() {
 
-		beforeEach(function() {
-			setFixtures([
-				"<span id='firstNameSpan'/>",
-				"<div id='firstNameDiv'/>",
-				"<input type='text' id='firstName'/>",
-				"<input type='textarea' id='firstNameTextArea'/>",
-				"<select id='firstNameSelect'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>"
-			].join(""));
-			
-			PersonController.include({
-				bindings: {
-					"text #firstNameSpan":"firstName",
-					"text #firstNameDiv":"firstName",
-					"value #firstName":"firstName",
-					"value #firstNameTextArea":"firstName",
-					"value #firstNameSelect":"firstName"
-				}
+		describe("with bindings", function() {
+			var Person, Controller;
+
+			beforeEach(function() {
+				setFixtures([
+					"<span id='firstNameSpan'/>",
+					"<div id='firstNameDiv'/>",
+					"<input type='text' id='firstName'/>",
+					"<input type='textarea' id='firstNameTextArea'/>",
+					"<select id='firstNameSelect'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>"
+				].join(""));
+				
+				PersonController.include({
+					bindings: {
+						"text #firstNameSpan":"firstName",
+						"text #firstNameDiv":"firstName",
+						"value #firstName":"firstName",
+						"value #firstNameTextArea":"firstName",
+						"value #firstNameSelect":"firstName"
+					}
+				});
+
+				Person = PersonCollection.create({ firstName: "Nathan", lastName: "Palmer" });
+				Controller = PersonController.init({ el: 'body', model:Person });
 			});
 
-			Person = PersonCollection.create({ firstName: "Nathan", lastName: "Palmer" });
-			Controller = PersonController.init({ el: 'body', model:Person });
+			it("should bind span", function() {
+				var firstNameSpan = $('#firstNameSpan');
+				var firstNameSpanText = firstNameSpan.text();
+
+				expect(firstNameSpanText).toBe("Nathan");
+			});
+
+			it("should bind div", function() {
+				var firstNameDiv = $('#firstNameDiv');
+				var firstNameDivText = firstNameDiv.text();
+
+				expect(firstNameDivText).toBe("Nathan");
+			});
+
+			it("should bind on input", function() {
+				var firstNameInput = $('#firstName');
+				var firstNameInputText = firstNameInput.val();
+
+				expect(firstNameInputText).toBe("Nathan");
+			});
+
+			it("should change model when changed on input", function() {
+				var firstNameInput = $('#firstName');
+				firstNameInput.val("Eric");
+				firstNameInput.trigger("change");
+
+				expect(Person.firstName).toBe("Eric");	
+			});
+
+			it("should bind on textarea", function() {
+				var firstNameInput = $('#firstNameTextArea');
+				var firstNameInputText = firstNameInput.val();
+
+				expect(firstNameInputText).toBe("Nathan");
+			});
+
+			it("should change model when changed on textarea", function() {
+				var firstNameInput = $('#firstNameTextArea');
+				firstNameInput.val("Eric");
+				firstNameInput.trigger("change");
+
+				expect(Person.firstName).toBe("Eric");	
+			});
+
+			it("should bind on select", function() {
+				var firstNameInput = $('#firstNameSelect');
+				var firstNameInputText = firstNameInput.find("option:selected").val();
+
+				expect(firstNameInputText).toBe("Nathan");
+			});
+
+			it("should change model when changed on select", function() {
+				expect(Person.firstName).toBe("Nathan");
+
+				var firstNameInput = $('#firstNameSelect');
+				firstNameInput.find("option[value='Eric']").attr("selected", "selected");
+				firstNameInput.trigger("change");
+
+				expect(Person.firstName).toBe("Eric");
+			});
+
 		});
 
-		it("should bind span", function() {
-			var firstNameSpan = $('#firstNameSpan');
-			var firstNameSpanText = firstNameSpan.text();
+		describe("with data-bind", function() {
+			var Person, Controller;
 
-			expect(firstNameSpanText).toBe("Nathan");
+			beforeEach(function() {
+				setFixtures([
+					"<span id='firstNameSpan' data-bind='text: firstName'/>",
+					"<div id='firstNameDiv' data-bind='text: firstName'/>",
+					"<input type='text' id='firstName' data-bind='value: firstName'/>",
+					"<input type='textarea' id='firstNameTextArea' data-bind='value: firstName'/>",
+					"<select id='firstNameSelect' data-bind='value: firstName'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>"
+				].join(""));
+				
+				Person = PersonCollection.create({ firstName: "Nathan", lastName: "Palmer" });
+				Controller = PersonController.init({ el: 'body', model:Person });
+			});
+
+			it("should bind span", function() {
+				var firstNameSpan = $('#firstNameSpan');
+				var firstNameSpanText = firstNameSpan.text();
+
+				expect(firstNameSpanText).toBe("Nathan");
+			});
+
+			it("should bind div", function() {
+				var firstNameDiv = $('#firstNameDiv');
+				var firstNameDivText = firstNameDiv.text();
+
+				expect(firstNameDivText).toBe("Nathan");
+			});
+
+			it("should bind on input", function() {
+				var firstNameInput = $('#firstName');
+				var firstNameInputText = firstNameInput.val();
+
+				expect(firstNameInputText).toBe("Nathan");
+			});
+
+			it("should change model when changed on input", function() {
+				var firstNameInput = $('#firstName');
+				firstNameInput.val("Eric");
+				firstNameInput.trigger("change");
+
+				expect(Person.firstName).toBe("Eric");	
+			});
+
+			it("should bind on textarea", function() {
+				var firstNameInput = $('#firstNameTextArea');
+				var firstNameInputText = firstNameInput.val();
+
+				expect(firstNameInputText).toBe("Nathan");
+			});
+
+			it("should change model when changed on textarea", function() {
+				var firstNameInput = $('#firstNameTextArea');
+				firstNameInput.val("Eric");
+				firstNameInput.trigger("change");
+
+				expect(Person.firstName).toBe("Eric");	
+			});
+
+			it("should bind on select", function() {
+				var firstNameInput = $('#firstNameSelect');
+				var firstNameInputText = firstNameInput.find("option:selected").val();
+
+				expect(firstNameInputText).toBe("Nathan");
+			});
+
+			it("should change model when changed on select", function() {
+				expect(Person.firstName).toBe("Nathan");
+
+				var firstNameInput = $('#firstNameSelect');
+				firstNameInput.find("option[value='Eric']").attr("selected", "selected");
+				firstNameInput.trigger("change");
+
+				expect(Person.firstName).toBe("Eric");
+			});
+
 		});
-
-		it("should bind div", function() {
-			var firstNameDiv = $('#firstNameDiv');
-			var firstNameDivText = firstNameDiv.text();
-
-			expect(firstNameDivText).toBe("Nathan");
-		});
-
-		it("should bind on input", function() {
-			var firstNameInput = $('#firstName');
-			var firstNameInputText = firstNameInput.val();
-
-			expect(firstNameInputText).toBe("Nathan");
-		});
-
-		it("should change model when changed on input", function() {
-			var firstNameInput = $('#firstName');
-			firstNameInput.val("Eric");
-			firstNameInput.trigger("change");
-
-			expect(Person.firstName).toBe("Eric");	
-		});
-
-		it("should bind on textarea", function() {
-			var firstNameInput = $('#firstNameTextArea');
-			var firstNameInputText = firstNameInput.val();
-
-			expect(firstNameInputText).toBe("Nathan");
-		});
-
-		it("should change model when changed on textarea", function() {
-			var firstNameInput = $('#firstNameTextArea');
-			firstNameInput.val("Eric");
-			firstNameInput.trigger("change");
-
-			expect(Person.firstName).toBe("Eric");	
-		});
-
-		it("should bind on select", function() {
-			var firstNameInput = $('#firstNameSelect');
-			var firstNameInputText = firstNameInput.find("option:selected").val();
-
-			expect(firstNameInputText).toBe("Nathan");
-		});
-
-		it("should change model when changed on select", function() {
-			expect(Person.firstName).toBe("Nathan");
-
-			var firstNameInput = $('#firstNameSelect');
-			firstNameInput.find("option[value='Eric']").attr("selected", "selected");
-			firstNameInput.trigger("change");
-
-			expect(Person.firstName).toBe("Eric");
-		});
-
-	});
-
-	describe("Update w/data-bind", function() {
-		var Person, Controller;
-
-		beforeEach(function() {
-			setFixtures([
-				"<span id='firstNameSpan' data-bind='text: firstName'/>",
-				"<div id='firstNameDiv' data-bind='text: firstName'/>",
-				"<input type='text' id='firstName' data-bind='value: firstName'/>",
-				"<input type='textarea' id='firstNameTextArea' data-bind='value: firstName'/>",
-				"<select id='firstNameSelect' data-bind='value: firstName'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>"
-			].join(""));
-			
-			Person = PersonCollection.create({ firstName: "Nathan", lastName: "Palmer" });
-			Controller = PersonController.init({ el: 'body', model:Person });
-		});
-
-		it("should bind span", function() {
-			var firstNameSpan = $('#firstNameSpan');
-			var firstNameSpanText = firstNameSpan.text();
-
-			expect(firstNameSpanText).toBe("Nathan");
-		});
-
-		it("should bind div", function() {
-			var firstNameDiv = $('#firstNameDiv');
-			var firstNameDivText = firstNameDiv.text();
-
-			expect(firstNameDivText).toBe("Nathan");
-		});
-
-		it("should bind on input", function() {
-			var firstNameInput = $('#firstName');
-			var firstNameInputText = firstNameInput.val();
-
-			expect(firstNameInputText).toBe("Nathan");
-		});
-
-		it("should change model when changed on input", function() {
-			var firstNameInput = $('#firstName');
-			firstNameInput.val("Eric");
-			firstNameInput.trigger("change");
-
-			expect(Person.firstName).toBe("Eric");	
-		});
-
-		it("should bind on textarea", function() {
-			var firstNameInput = $('#firstNameTextArea');
-			var firstNameInputText = firstNameInput.val();
-
-			expect(firstNameInputText).toBe("Nathan");
-		});
-
-		it("should change model when changed on textarea", function() {
-			var firstNameInput = $('#firstNameTextArea');
-			firstNameInput.val("Eric");
-			firstNameInput.trigger("change");
-
-			expect(Person.firstName).toBe("Eric");	
-		});
-
-		it("should bind on select", function() {
-			var firstNameInput = $('#firstNameSelect');
-			var firstNameInputText = firstNameInput.find("option:selected").val();
-
-			expect(firstNameInputText).toBe("Nathan");
-		});
-
-		it("should change model when changed on select", function() {
-			expect(Person.firstName).toBe("Nathan");
-
-			var firstNameInput = $('#firstNameSelect');
-			firstNameInput.find("option[value='Eric']").attr("selected", "selected");
-			firstNameInput.trigger("change");
-
-			expect(Person.firstName).toBe("Eric");
-		});
-
 	});
 
 	describe("Options", function() {
 		var Person;
 
-		beforeEach(function() {
-			/*setFixtures([
-				"<select id='phoneNumbers' data-bind='options: phoneNumbers, selectedOptions: phoneNumbersSelected'/>"
-			].join(""));*/
-			setFixtures([
-				"<select id='phoneNumbers'/>"
-			].join(""));
-			Person = PersonCollection.create({ 
-				firstName: "Nathan", 
-				lastName: "Palmer",
-				phoneNumbers: [ "555-555-1010", "555-101-9999" ],
-				phoneNumbersSelected: []
+		describe("with bindings", function() {
+			beforeEach(function() {
+				setFixtures([
+					"<select id='phoneNumbers'/>"
+				].join(""));
+
+				Person = PersonCollection.create({ 
+					firstName: "Nathan", 
+					lastName: "Palmer",
+					phoneNumbers: [ "555-555-1010", "555-101-9999" ],
+					phoneNumbersSelected: []
+				});
+
+				PersonController.include({
+					bindings: {
+						"options select":"phoneNumbers",
+						"selectedOptions select":"phoneNumbersSelected"
+					}
+				});
+
+				Controller = PersonController.init({ el: 'body', model:Person });
 			});
 
-			PersonController.include({
-				bindings: {
-					"options select":"phoneNumbers",
-					"selectedOptions select":"phoneNumbersSelected"
-				}
+			it("should create options", function() {
+				var phoneNumberSelect = $('#phoneNumbers');
+				var phoneNumberHtml = [
+					'<option value="555-555-1010">555-555-1010</option>',
+					'<option value="555-101-9999">555-101-9999</option>'
+				].join("");
+				expect(phoneNumberSelect.html()).toBe(phoneNumberHtml);
 			});
 
-			Controller = PersonController.init({ el: 'body', model:Person });
+			it("should bind selectedOptions", function() {
+				var phoneNumberSelect = $('#phoneNumbers');
+				phoneNumberSelect.find("option[value='555-101-9999']").attr("selected", "selected");
+				phoneNumberSelect.trigger("change");
+				expect(Person.phoneNumbersSelected.length).toBe(1);
+				expect(Person.phoneNumbersSelected[0]).toBe(Person.phoneNumbers[1]);
+			});
 		});
 
-		it("should create options", function() {
-			var phoneNumberSelect = $('#phoneNumbers');
-			var phoneNumberHtml = [
-				'<option value="555-555-1010">555-555-1010</option>',
-				'<option value="555-101-9999">555-101-9999</option>'
-			].join("");
-			expect(phoneNumberSelect.html()).toBe(phoneNumberHtml);
+		describe("with data-bind", function() {
+			beforeEach(function() {
+				setFixtures([
+					"<select id='phoneNumbers' data-bind='options: phoneNumbers, selectedOptions: phoneNumbersSelected'/>"
+				].join(""));
+
+				Person = PersonCollection.create({ 
+					firstName: "Nathan", 
+					lastName: "Palmer",
+					phoneNumbers: [ "555-555-1010", "555-101-9999" ],
+					phoneNumbersSelected: []
+				});
+
+				Controller = PersonController.init({ el: 'body', model:Person });
+			});
+
+			it("should create options", function() {
+				var phoneNumberSelect = $('#phoneNumbers');
+				var phoneNumberHtml = [
+					'<option value="555-555-1010">555-555-1010</option>',
+					'<option value="555-101-9999">555-101-9999</option>'
+				].join("");
+				expect(phoneNumberSelect.html()).toBe(phoneNumberHtml);
+			});
+
+			it("should bind selectedOptions", function() {
+				var phoneNumberSelect = $('#phoneNumbers');
+				phoneNumberSelect.find("option[value='555-101-9999']").attr("selected", "selected");
+				phoneNumberSelect.trigger("change");
+				expect(Person.phoneNumbersSelected.length).toBe(1);
+				expect(Person.phoneNumbersSelected[0]).toBe(Person.phoneNumbers[1]);
+			});
 		});
 
-		it("should bind selectedOptions", function() {
-			var phoneNumberSelect = $('#phoneNumbers');
-			phoneNumberSelect.find("option[value='555-101-9999']").attr("selected", "selected");
-			phoneNumberSelect.trigger("change");
-			expect(Person.phoneNumbersSelected.length).toBe(1);
-			expect(Person.phoneNumbersSelected[0]).toBe(Person.phoneNumbers[1]);
-		});
+		
 	});
 
 	xdescribe("Click", function() {
