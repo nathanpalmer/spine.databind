@@ -325,5 +325,5 @@
       return result;
     }
   };
-  this.DataBind = DataBind;
+  this.Spine.DataBind = DataBind;
 }).call(this);

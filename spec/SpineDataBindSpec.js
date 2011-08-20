@@ -17,7 +17,7 @@ describe("Spine.DataBind", function() {
 			}
 		});
 
-		PersonController.include(DataBind);
+		PersonController.include(Spine.DataBind);
 	});
 
 	describe("Update", function() {

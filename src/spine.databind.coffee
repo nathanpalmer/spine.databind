@@ -240,4 +240,4 @@ DataBind =
 			else result = item[value]
 		result 
 
-@DataBind = DataBind
+@Spine.DataBind = DataBind
