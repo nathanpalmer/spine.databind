@@ -338,40 +338,92 @@ describe("Spine.DataBind", function() {
 		});
 	});
 
-	xdescribe("Enable", function() {
-		var Person;
+	describe("Enable", function() {
+		describe("with bindings", function() {
+			var Person;
 
-		beforeEach(function() {
-			PersonCollection.include({
-				phoneNumberCount: function() {
-					return this.phoneNumbers.length;
-				},
-				reset: function() {
-					this.phoneNumbers = [];
-					this.save();
-				}
+			beforeEach(function() {
+				PersonCollection.include({
+					phoneNumberCount: function() {
+						return this.phoneNumbers.length;
+					},
+					reset: function() {
+						this.phoneNumbers = [];
+						this.save();
+					}
+				});
+
+				setFixtures("<input id='reset' type='button' value='reset'/>");
+				
+				Person = PersonCollection.create({ 
+					firstName: "Nathan", 
+					lastName: "Palmer",
+					phoneNumbers: []
+				});
+
+				PersonController.include({
+					bindings: {
+						"enable input":"phoneNumberCount"
+					}
+				});
+
+				Controller = PersonController.init({ el: 'body', model:Person });
 			});
-			setFixtures("<input id='reset' type='button' value='reset' data-bind='enable: phoneNumberCount'/>");
-			Person = PersonCollection.create({ 
-				firstName: "Nathan", 
-				lastName: "Palmer",
-				phoneNumbers: []
+
+			it("should start out disabled", function() {
+				var reset = $('#reset');
+				expect(reset.attr('disabled')).toBe('disabled');
+			});
+
+			it("should enable when phone numbers present", function() {
+				Person.phoneNumbers.push("555-555-9090");
+				Person.save();
+
+				var reset = $('#reset');
+				expect(reset.attr('disabled')).toBe(undefined);
 			});
 		});
+		
+		describe("with data-bind", function() {
+			var Person;
 
-		it("should start out disabled", function() {
-			var reset = $('#reset');
-			expect(reset.attr('disabled')).toBe('disabled');
-		});
+			beforeEach(function() {
+				PersonCollection.include({
+					phoneNumberCount: function() {
+						return this.phoneNumbers.length;
+					},
+					reset: function() {
+						this.phoneNumbers = [];
+						this.save();
+					}
+				});
 
-		it("should enable when phone numbers present", function() {
-			Person.phoneNumbers.push("555-555-9090");
-			Person.save();
+				setFixtures("<input id='reset' type='button' value='reset' data-bind='enable: phoneNumberCount'/>");
+				
+				Person = PersonCollection.create({ 
+					firstName: "Nathan", 
+					lastName: "Palmer",
+					phoneNumbers: []
+				});
 
-			var reset = $('#reset');
-			expect(reset.attr('disabled')).toBe(undefined);
-		});
+				Controller = PersonController.init({ el: 'body', model:Person });
+			});
+
+			it("should start out disabled", function() {
+				var reset = $('#reset');
+				expect(reset.attr('disabled')).toBe('disabled');
+			});
+
+			it("should enable when phone numbers present", function() {
+				Person.phoneNumbers.push("555-555-9090");
+				Person.save();
+
+				var reset = $('#reset');
+				expect(reset.attr('disabled')).toBe(undefined);
+			});
+		});	
 	});
+	
 
 	xdescribe("Visible", function() {
 		var Person;

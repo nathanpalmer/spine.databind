@@ -97,8 +97,28 @@ Click =
 		for operator in operators
 			DataBind.eval(model,operator.property)
 
+Enable = 
+	keys: [ "enable" ]
+
+	bind: (operators,model,el) ->
+		model.bind("update", => @update(operators,model,el))
+		@update(operators,model,el)
+
+	unbind: (operators,model,el) ->
+		model.unbind("update")
+
+	update: (operators,model,el) ->
+		operator = operators.filter((e) -> e.name is "enable")[0]
+		result = DataBind.eval(model,operator.property)
+
+		if result
+			el.removeAttr("disabled")
+		else
+			el.attr("disabled","disabled")
+		
+
 DataBind =
-	binders: [ Update, Options, Click ]
+	binders: [ Update, Options, Click, Enable ]
 
 	initializeBindings: (args...) ->
 		@trigger "destroy-bindings"
