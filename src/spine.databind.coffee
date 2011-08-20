@@ -96,6 +96,27 @@ DataBind =
 			
 			return null
 
+		addElement = (elements,info,property) ->
+			binder = findBinder(info.name)
+			if binder is null then return
+
+			matching = elements.filter((e)->e.el[0] is info.element[0] and e.binder is binder)
+			if matching.length is 0
+				element = 
+					el: info.element
+					binder: binder
+					operators: []
+
+				elements.push(element)
+			else
+				element = elements[0]
+
+			element.operators.push({
+				name: info.name
+				parameters: info.parameters
+				property: property
+			})
+
 		parse = (key) ->
 			match = key.match(splitter)
 			name = match[1]
@@ -110,7 +131,7 @@ DataBind =
 			return {
 				name: name
 				parameters: parameters
-				selector: selector
+				element: selector
 			}
 
 		init = (element) ->
@@ -129,24 +150,7 @@ DataBind =
 		for key of @bindings
 			property = @bindings[key]
 			info = parse(key)
-			binder = findBinder(info.name)
-			if binder is null then continue
-			matching = elements.filter((e)->e.el[0] is info.selector[0] and e.binder is binder)
-			if matching.length is 0
-				element = 
-					el: info.selector
-					binder: binder
-					operators: []
-
-				elements.push(element)
-			else
-				element = elements[0]
-
-			element.operators.push({
-				name: info.name
-				parameters: info.parameters
-				property: property
-			})
+			addElement(elements,info,property)
 		
 		trim = (s) ->
 			s.replace(/^\s+|\s+$/g,"")
@@ -168,24 +172,7 @@ DataBind =
 			
 			for info in attributes
 				binder = findBinder(info.name)
-				continue if binder is null
-
-				matching = elements.filter((i)->i.el is info.element and i.binder is binder)
-				if matching.length is 0
-					element = 
-						el: info.element
-						binder: binder
-						operators: []
-
-					elements.push(element)
-				else
-					element = elements[0]
-
-				element.operators.push({
-					name: info.name
-					parameters: info.parameters
-					property: info.value
-				})
+				addElement(elements,info,info.value)
 
 		for element in elements
 			init(element)

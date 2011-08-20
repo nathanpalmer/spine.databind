@@ -130,7 +130,7 @@
   DataBind = {
     binders: [Update, Options],
     initializeBindings: function() {
-      var args, binder, controller, element, elements, findBinder, info, init, key, matching, parse, property, splitter, trim, _i, _len;
+      var addElement, args, controller, element, elements, findBinder, info, init, key, parse, property, splitter, trim, _i, _len;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       this.trigger("destroy-bindings");
       controller = this;
@@ -146,6 +146,31 @@
         }
         return null;
       };
+      addElement = function(elements, info, property) {
+        var binder, element, matching;
+        binder = findBinder(info.name);
+        if (binder === null) {
+          return;
+        }
+        matching = elements.filter(function(e) {
+          return e.el[0] === info.element[0] && e.binder === binder;
+        });
+        if (matching.length === 0) {
+          element = {
+            el: info.element,
+            binder: binder,
+            operators: []
+          };
+          elements.push(element);
+        } else {
+          element = elements[0];
+        }
+        return element.operators.push({
+          name: info.name,
+          parameters: info.parameters,
+          property: property
+        });
+      };
       parse = function(key) {
         var match, name, parameters, selector;
         match = key.match(splitter);
@@ -160,7 +185,7 @@
         return {
           name: name,
           parameters: parameters,
-          selector: selector
+          element: selector
         };
       };
       init = function(element) {
@@ -180,34 +205,13 @@
       for (key in this.bindings) {
         property = this.bindings[key];
         info = parse(key);
-        binder = findBinder(info.name);
-        if (binder === null) {
-          continue;
-        }
-        matching = elements.filter(function(e) {
-          return e.el[0] === info.selector[0] && e.binder === binder;
-        });
-        if (matching.length === 0) {
-          element = {
-            el: info.selector,
-            binder: binder,
-            operators: []
-          };
-          elements.push(element);
-        } else {
-          element = elements[0];
-        }
-        element.operators.push({
-          name: info.name,
-          parameters: info.parameters,
-          property: property
-        });
+        addElement(elements, info, property);
       }
       trim = function(s) {
         return s.replace(/^\s+|\s+$/g, "");
       };
       this.el.find("*[data-bind]").each(function() {
-        var attributes, databind, e, info, _i, _len, _results;
+        var attributes, binder, databind, e, info, _i, _len, _results;
         e = $(this);
         databind = e.data("bind").split(",");
         attributes = databind.map(function(item) {
@@ -226,27 +230,7 @@
         for (_i = 0, _len = attributes.length; _i < _len; _i++) {
           info = attributes[_i];
           binder = findBinder(info.name);
-          if (binder === null) {
-            continue;
-          }
-          matching = elements.filter(function(i) {
-            return i.el === info.element && i.binder === binder;
-          });
-          if (matching.length === 0) {
-            element = {
-              el: info.element,
-              binder: binder,
-              operators: []
-            };
-            elements.push(element);
-          } else {
-            element = elements[0];
-          }
-          _results.push(element.operators.push({
-            name: info.name,
-            parameters: info.parameters,
-            property: info.value
-          }));
+          _results.push(addElement(elements, info, info.value));
         }
         return _results;
       });
