@@ -20,18 +20,18 @@ describe("Spine.DataBind", function() {
 		PersonController.include(DataBind);
 	});
 
-	describe("Update", function() {
+	describe("Update w/bindings", function() {
 		var Person, Controller;
 
 		beforeEach(function() {
 			setFixtures([
-				"<span id='firstNameSpan' data-bind='text: firstName'/>",
-				"<div id='firstNameDiv' data-bind='text: firstName'/>",
-				"<input type='text' id='firstName' data-bind='value: firstName'/>",
-				"<input type='textarea' id='firstNameTextArea' data-bind='value: firstName'/>",
-				"<select id='firstNameSelect' data-bind='value: firstName'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>"
+				"<span id='firstNameSpan'/>",
+				"<div id='firstNameDiv'/>",
+				"<input type='text' id='firstName'/>",
+				"<input type='textarea' id='firstNameTextArea'/>",
+				"<select id='firstNameSelect'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>"
 			].join(""));
-
+			
 			PersonController.include({
 				bindings: {
 					"text #firstNameSpan":"firstName",
@@ -43,7 +43,7 @@ describe("Spine.DataBind", function() {
 			});
 
 			Person = PersonCollection.create({ firstName: "Nathan", lastName: "Palmer" });
-			Controller = PersonController.init({ model:Person });
+			Controller = PersonController.init({ el: 'body', model:Person });
 		});
 
 		it("should bind span", function() {
@@ -108,13 +108,95 @@ describe("Spine.DataBind", function() {
 		});
 
 	});
-/*
+
+	describe("Update w/data-bind", function() {
+		var Person, Controller;
+
+		beforeEach(function() {
+			setFixtures([
+				"<span id='firstNameSpan' data-bind='text: firstName'/>",
+				"<div id='firstNameDiv' data-bind='text: firstName'/>",
+				"<input type='text' id='firstName' data-bind='value: firstName'/>",
+				"<input type='textarea' id='firstNameTextArea' data-bind='value: firstName'/>",
+				"<select id='firstNameSelect' data-bind='value: firstName'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>"
+			].join(""));
+			
+			Person = PersonCollection.create({ firstName: "Nathan", lastName: "Palmer" });
+			Controller = PersonController.init({ el: 'body', model:Person });
+		});
+
+		it("should bind span", function() {
+			var firstNameSpan = $('#firstNameSpan');
+			var firstNameSpanText = firstNameSpan.text();
+
+			expect(firstNameSpanText).toBe("Nathan");
+		});
+
+		it("should bind div", function() {
+			var firstNameDiv = $('#firstNameDiv');
+			var firstNameDivText = firstNameDiv.text();
+
+			expect(firstNameDivText).toBe("Nathan");
+		});
+
+		it("should bind on input", function() {
+			var firstNameInput = $('#firstName');
+			var firstNameInputText = firstNameInput.val();
+
+			expect(firstNameInputText).toBe("Nathan");
+		});
+
+		it("should change model when changed on input", function() {
+			var firstNameInput = $('#firstName');
+			firstNameInput.val("Eric");
+			firstNameInput.trigger("change");
+
+			expect(Person.firstName).toBe("Eric");	
+		});
+
+		it("should bind on textarea", function() {
+			var firstNameInput = $('#firstNameTextArea');
+			var firstNameInputText = firstNameInput.val();
+
+			expect(firstNameInputText).toBe("Nathan");
+		});
+
+		it("should change model when changed on textarea", function() {
+			var firstNameInput = $('#firstNameTextArea');
+			firstNameInput.val("Eric");
+			firstNameInput.trigger("change");
+
+			expect(Person.firstName).toBe("Eric");	
+		});
+
+		it("should bind on select", function() {
+			var firstNameInput = $('#firstNameSelect');
+			var firstNameInputText = firstNameInput.find("option:selected").val();
+
+			expect(firstNameInputText).toBe("Nathan");
+		});
+
+		it("should change model when changed on select", function() {
+			expect(Person.firstName).toBe("Nathan");
+
+			var firstNameInput = $('#firstNameSelect');
+			firstNameInput.find("option[value='Eric']").attr("selected", "selected");
+			firstNameInput.trigger("change");
+
+			expect(Person.firstName).toBe("Eric");
+		});
+
+	});
+
 	describe("Options", function() {
 		var Person;
 
 		beforeEach(function() {
-			setFixtures([
+			/*setFixtures([
 				"<select id='phoneNumbers' data-bind='options: phoneNumbers, selectedOptions: phoneNumbersSelected'/>"
+			].join(""));*/
+			setFixtures([
+				"<select id='phoneNumbers'/>"
 			].join(""));
 			Person = PersonCollection.create({ 
 				firstName: "Nathan", 
@@ -122,6 +204,15 @@ describe("Spine.DataBind", function() {
 				phoneNumbers: [ "555-555-1010", "555-101-9999" ],
 				phoneNumbersSelected: []
 			});
+
+			PersonController.include({
+				bindings: {
+					"options select":"phoneNumbers",
+					"selectedOptions select":"phoneNumbersSelected"
+				}
+			});
+
+			Controller = PersonController.init({ el: 'body', model:Person });
 		});
 
 		it("should create options", function() {
@@ -142,7 +233,7 @@ describe("Spine.DataBind", function() {
 		});
 	});
 
-	describe("Click", function() {
+	xdescribe("Click", function() {
 		var Person;
 
 		beforeEach(function() {
@@ -168,7 +259,7 @@ describe("Spine.DataBind", function() {
 		});
 	});
 
-	describe("Enable", function() {
+	xdescribe("Enable", function() {
 		var Person;
 
 		beforeEach(function() {
@@ -203,7 +294,7 @@ describe("Spine.DataBind", function() {
 		});
 	});
 
-	describe("Visible", function() {
+	xdescribe("Visible", function() {
 		var Person;
 
 		beforeEach(function() {
@@ -238,7 +329,7 @@ describe("Spine.DataBind", function() {
 		});
 	});
 
-	describe("Submit", function() {
+	xdescribe("Submit", function() {
 		var Person;
 
 		beforeEach(function() {
@@ -275,7 +366,7 @@ describe("Spine.DataBind", function() {
 		});
 	});
 
-	describe("Checked", function() {
+	xdescribe("Checked", function() {
 		var Person;
 
 		beforeEach(function() {
@@ -307,7 +398,7 @@ describe("Spine.DataBind", function() {
 		})
 	});
 
-	describe("Radio", function() {
+	xdescribe("Radio", function() {
 		var Person;
 
 		beforeEach(function() {
@@ -343,5 +434,5 @@ describe("Spine.DataBind", function() {
 			expect(mrs.attr('checked')).toBe('checked');
 		})
 	});
-*/
+
 });
