@@ -145,6 +145,9 @@ DataBind =
 			controller.bind "destroy-bindings", ->
 				element.binder.unbind(operators,model,el)
 
+		trim = (s) ->
+			s.replace(/^\s+|\s+$/g,"")
+
 		elements = []
 
 		for key of @bindings
@@ -152,9 +155,6 @@ DataBind =
 			info = parse(key)
 			addElement(elements,info,property)
 		
-		trim = (s) ->
-			s.replace(/^\s+|\s+$/g,"")
-
 		@el.find("*[data-bind]").each () ->
 			e = $(this)
 			databind = e.data("bind").split(",")

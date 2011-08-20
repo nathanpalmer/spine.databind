@@ -201,15 +201,15 @@
           return element.binder.unbind(operators, model, el);
         });
       };
+      trim = function(s) {
+        return s.replace(/^\s+|\s+$/g, "");
+      };
       elements = [];
       for (key in this.bindings) {
         property = this.bindings[key];
         info = parse(key);
         addElement(elements, info, property);
       }
-      trim = function(s) {
-        return s.replace(/^\s+|\s+$/g, "");
-      };
       this.el.find("*[data-bind]").each(function() {
         var attributes, binder, databind, e, info, _i, _len, _results;
         e = $(this);
