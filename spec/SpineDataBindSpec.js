@@ -272,29 +272,69 @@ describe("Spine.DataBind", function() {
 		
 	});
 
-	xdescribe("Click", function() {
+	describe("Click", function() {
 		var Person;
 
-		beforeEach(function() {
-			PersonCollection.include({
-				resetName: function() {
-					this.firstName = "Reset";
-					this.save();
-				}
+		describe("with bindings", function() {
+			beforeEach(function() {
+				PersonCollection.include({
+					resetName: function() {
+						this.firstName = "Reset";
+						this.save();
+					}
+				});
+
+				setFixtures("<input id='reset' type='button' value='reset'/>");
+				
+				Person = PersonCollection.create({ 
+					firstName: "Nathan", 
+					lastName: "Palmer"
+				});
+
+				PersonController.include({
+					bindings: {
+						"click input":"resetName"
+					}
+				});
+
+				Controller = PersonController.init({ el: 'body', model:Person });
 			});
-			setFixtures("<input id='reset' type='button' value='reset' data-bind='click: resetName'/>");
-			Person = PersonCollection.create({ 
-				firstName: "Nathan", 
-				lastName: "Palmer"
+
+			it("should reset name", function() {
+				expect(Person.firstName).toBe("Nathan");
+
+				$('#reset').click();
+
+				expect(Person.firstName).toBe("Reset");
 			});
 		});
 
-		it("should reset name", function() {
-			expect(Person.firstName).toBe("Nathan");
+		describe("with data-bind", function() {
+			beforeEach(function() {
+				PersonCollection.include({
+					resetName: function() {
+						this.firstName = "Reset";
+						this.save();
+					}
+				});
 
-			$('#reset').click();
+				setFixtures("<input id='reset' type='button' value='reset' data-bind='click: resetName'/>");
+				
+				Person = PersonCollection.create({ 
+					firstName: "Nathan", 
+					lastName: "Palmer"
+				});
 
-			expect(Person.firstName).toBe("Reset");
+				Controller = PersonController.init({ el: 'body', model:Person });
+			});
+
+			it("should reset name", function() {
+				expect(Person.firstName).toBe("Nathan");
+
+				$('#reset').click();
+
+				expect(Person.firstName).toBe("Reset");
+			});
 		});
 	});
 

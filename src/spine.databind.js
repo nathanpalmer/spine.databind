@@ -1,6 +1,11 @@
 (function() {
-  var DataBind, Options, Update;
+  var Click, DataBind, Options, Template, Update;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; }, __slice = Array.prototype.slice;
+  Template = {
+    keys: [],
+    bind: function(operators, model, el) {},
+    unbind: function(operators, model, el) {}
+  };
   Update = {
     keys: ["text", "value"],
     bind: function(operators, model, el) {
@@ -127,8 +132,28 @@
       return model.save();
     }
   };
+  Click = {
+    keys: ["click"],
+    bind: function(operators, model, el) {
+      return el.bind("click", __bind(function() {
+        return this.click(operators, model, el);
+      }, this));
+    },
+    unbind: function(operators, model, el) {
+      return el.unbind("click");
+    },
+    click: function(operators, model, el) {
+      var operator, _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = operators.length; _i < _len; _i++) {
+        operator = operators[_i];
+        _results.push(DataBind.eval(model, operator.property));
+      }
+      return _results;
+    }
+  };
   DataBind = {
-    binders: [Update, Options],
+    binders: [Update, Options, Click],
     initializeBindings: function() {
       var addElement, args, controller, element, elements, findBinder, info, init, key, parse, property, splitter, trim, _i, _len;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];

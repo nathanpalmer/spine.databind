@@ -1,3 +1,8 @@
+Template = 
+	keys: [ ]
+	bind: (operators,model,el) ->
+	unbind: (operators,model,el) ->
+
 Update =
 	keys: [ "text", "value" ]
 
@@ -80,8 +85,20 @@ Options =
 		)
 		model.save()
 
+Click = 
+	keys: [ "click" ]
+	bind: (operators,model,el) ->
+		el.bind("click", => @click(operators,model,el))
+
+	unbind: (operators,model,el) ->
+		el.unbind("click")
+
+	click: (operators,model,el) ->
+		for operator in operators
+			DataBind.eval(model,operator.property)
+
 DataBind =
-	binders: [ Update, Options ]
+	binders: [ Update, Options, Click ]
 
 	initializeBindings: (args...) ->
 		@trigger "destroy-bindings"
