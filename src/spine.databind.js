@@ -212,14 +212,15 @@
       return model.unbind("update");
     },
     update: function(operators, model, el) {
-      var json, operator, property, _results;
+      var json, operator, property, value, _results;
       operator = operators.filter(function(e) {
         return e.name === "attr";
       })[0];
       json = JSON.parse(operator.property);
       _results = [];
       for (property in json) {
-        _results.push(el.attr(property, model[json[property]]));
+        value = DataBind.eval(model, json[property]);
+        _results.push(el.attr(property, value));
       }
       return _results;
     }
@@ -230,7 +231,7 @@
       var addElement, controller, element, elements, findBinder, info, init, key, parse, property, splitter, trim, _i, _len;
       this.trigger("destroy-bindings");
       controller = this;
-      splitter = /(\w+)(\[?.*]?) (.*)/;
+      splitter = /(\w+)(\[.*])? (.*)/;
       findBinder = function(key) {
         var binder, _i, _len, _ref;
         _ref = controller.binders;
@@ -274,9 +275,9 @@
         parameters = match[2];
         selector = match[3];
         if (selector === "") {
-          selector = $(controller.el.selector);
+          selector = controller.el;
         } else {
-          selector = $(controller.el.selector + " " + selector);
+          selector = controller.el.find(selector);
         }
         return {
           name: name,

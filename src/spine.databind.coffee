@@ -148,7 +148,8 @@ Attribute =
 		operator = operators.filter((e) -> e.name is "attr")[0]
 		json = JSON.parse(operator.property)
 		for property of json
-			el.attr(property,model[json[property]])
+			value = DataBind.eval(model,json[property])
+			el.attr(property,value)
 			
 DataBind =
 	binders: [ Update, Options, Click, Enable, Visible, Attribute ]
@@ -157,7 +158,7 @@ DataBind =
 		@trigger "destroy-bindings"
 
 		controller = this
-		splitter = /(\w+)(\[?.*]?) (.*)/
+		splitter = /(\w+)(\[.*])? (.*)/
 
 		findBinder = (key) ->
 			for binder in controller.binders
@@ -194,9 +195,9 @@ DataBind =
 			selector = match[3]
 
 			if selector is ""
-				selector = $(controller.el.selector)
+				selector = controller.el
 			else
-				selector = $(controller.el.selector + " " + selector)
+				selector = controller.el.find(selector)
 
 			return {
 				name: name
