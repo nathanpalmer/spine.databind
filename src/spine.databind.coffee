@@ -30,7 +30,7 @@ Update =
 			e = $(@)
 			for operator in operators
 				value = DataBind.eval(model,operator.property)
-				console.log "Update #{e.tagName} #{operator.property} #{value}"
+				console.log "Update #{@tagName} #{operator.property} #{value}"
 				switch @tagName
 					when "INPUT", "TEXTAREA"
 						e.val(value)
@@ -150,11 +150,50 @@ Attribute =
 		for property of json
 			value = DataBind.eval(model,json[property])
 			el.attr(property,value)
-			
-DataBind =
-	binders: [ Update, Options, Click, Enable, Visible, Attribute ]
 
-	initializeBindings: (model) ->
+Checked = 
+	keys: [ "checked" ]
+
+	bind: (operators,model,el) ->
+		@type = el.attr("type")
+		el.bind("change", => @change(operators,model,el))
+		model.bind("change", => @update(operators,model,el))
+		@update(operators,model,el)
+
+	unbind: (operators,model,el) ->
+		el.unbind("change")
+		model.unbind("change")
+
+	type: null
+
+	change: (operators,model,el) ->
+		operator = operators.filter((e) -> e.name is "checked")[0]
+		if @type is "radio"
+			model.updateAttribute(operator.property, el.val())
+		else
+			value = el.attr("checked") is "checked"
+			model.updateAttribute(operator.property, value)
+
+	update: (operators,model,el) ->
+		operator = operators.filter((e) -> e.name is "checked")[0]
+		result = DataBind.eval(model,operator.property)
+		value = el.val()
+
+		if @type is "radio"
+			if result is not value
+				el.removeAttr("checked")
+			else
+				el.attr("checked", "checked")
+		else
+			if not result
+				el.removeAttr("checked")
+			else
+				el.attr("checked", "checked")
+	
+DataBind =
+	binders: [ Update, Options, Click, Enable, Visible, Attribute, Checked ]
+
+	refreshBindings: (model) ->
 		@trigger "destroy-bindings"
 
 		controller = this

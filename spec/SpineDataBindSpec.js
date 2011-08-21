@@ -14,7 +14,7 @@ describe("Spine.DataBind", function() {
 
 		PersonController = Spine.Controller.create({
 			init: function() {
-				this.initializeBindings(this.model);
+				this.refreshBindings(this.model);
 			}
 		});
 
@@ -508,36 +508,71 @@ describe("Spine.DataBind", function() {
 		});
 	});
 
-	xdescribe("Checked", function() {
-		var Person;
+	describe("Checked", function() {
+		var Person, Controller;
 
-		beforeEach(function() {
-			setFixtures([
-				"<form data-bind='submit: addNumber'>",
-					"<input type='checkbox' data-bind='checked: person' id='person'/>",
-					"<input type='submit' id='submit'/>",
-				"</form>"
-			].join(""));
-
-			Person = PersonCollection.create({ 
-				firstName: "Nathan", 
-				lastName: "Palmer",
-				person: true
+		var Tests = function() {
+			it("should bind to person", function() {
+				var person = $('#person');
+				expect(person.attr('checked')).toBe('checked');
 			});
+
+			it("should change when model is updated", function() {
+				Person.person = false;
+				Person.save();
+
+				var person = $('#person');
+				expect(person.attr('checked')).toBe(undefined);
+			});
+		};
+
+		describe("with bindings", function() {
+			beforeEach(function() {
+				setFixtures([
+					"<form>",
+						"<input type='checkbox' id='person'/>",
+						"<input type='submit' id='submit'/>",
+					"</form>"
+				].join(""));
+
+				PersonController.include({
+					bindings: {
+						"checked input[type=checkbox]": "person"
+					}
+				});
+
+				Person = PersonCollection.create({ 
+					firstName: "Nathan", 
+					lastName: "Palmer",
+					person: true
+				});
+
+				Controller = PersonController.init({ el: 'body', model:Person });
+			});
+
+			Tests();
 		});
 
-		it("should bind to person", function() {
-			var person = $('#person');
-			expect(person.attr('checked')).toBe('checked');
+		describe("with data-bind", function() {
+			beforeEach(function() {
+				setFixtures([
+					"<form>",
+						"<input type='checkbox' data-bind='checked: person' id='person'/>",
+						"<input type='submit' id='submit'/>",
+					"</form>"
+				].join(""));
+
+				Person = PersonCollection.create({ 
+					firstName: "Nathan", 
+					lastName: "Palmer",
+					person: true
+				});
+
+				Controller = PersonController.init({ el: 'body', model:Person });
+			});
+
+			Tests();
 		});
-
-		it("should change when model is updated", function() {
-			Person.person = false;
-			Person.save();
-
-			var person = $('#person');
-			expect(person.attr('checked')).toBe(undefined);
-		})
 	});
 
 	xdescribe("Radio", function() {

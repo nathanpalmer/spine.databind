@@ -1,5 +1,5 @@
 (function() {
-  var Attribute, Click, DataBind, Enable, Options, Template, Update, Visible;
+  var Attribute, Checked, Click, DataBind, Enable, Options, Template, Update, Visible;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   Template = {
     keys: [],
@@ -50,7 +50,7 @@
         for (_i = 0, _len = operators.length; _i < _len; _i++) {
           operator = operators[_i];
           value = DataBind.eval(model, operator.property);
-          console.log("Update " + e.tagName + " " + operator.property + " " + value);
+          console.log("Update " + this.tagName + " " + operator.property + " " + value);
           _results.push((function() {
             switch (this.tagName) {
               case "INPUT":
@@ -225,9 +225,60 @@
       return _results;
     }
   };
+  Checked = {
+    keys: ["checked"],
+    bind: function(operators, model, el) {
+      this.type = el.attr("type");
+      el.bind("change", __bind(function() {
+        return this.change(operators, model, el);
+      }, this));
+      model.bind("change", __bind(function() {
+        return this.update(operators, model, el);
+      }, this));
+      return this.update(operators, model, el);
+    },
+    unbind: function(operators, model, el) {
+      el.unbind("change");
+      return model.unbind("change");
+    },
+    type: null,
+    change: function(operators, model, el) {
+      var operator, value;
+      operator = operators.filter(function(e) {
+        return e.name === "checked";
+      })[0];
+      if (this.type === "radio") {
+        return model.updateAttribute(operator.property, el.val());
+      } else {
+        value = el.attr("checked") === "checked";
+        return model.updateAttribute(operator.property, value);
+      }
+    },
+    update: function(operators, model, el) {
+      var operator, result, value;
+      operator = operators.filter(function(e) {
+        return e.name === "checked";
+      })[0];
+      result = DataBind.eval(model, operator.property);
+      value = el.val();
+      if (this.type === "radio") {
+        if (result === !value) {
+          return el.removeAttr("checked");
+        } else {
+          return el.attr("checked", "checked");
+        }
+      } else {
+        if (!result) {
+          return el.removeAttr("checked");
+        } else {
+          return el.attr("checked", "checked");
+        }
+      }
+    }
+  };
   DataBind = {
-    binders: [Update, Options, Click, Enable, Visible, Attribute],
-    initializeBindings: function(model) {
+    binders: [Update, Options, Click, Enable, Visible, Attribute, Checked],
+    refreshBindings: function(model) {
       var addElement, controller, element, elements, findBinder, info, init, key, parse, property, splitter, trim, _i, _len;
       this.trigger("destroy-bindings");
       controller = this;
