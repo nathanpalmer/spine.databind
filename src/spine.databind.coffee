@@ -134,9 +134,24 @@ Visible =
 			el.show()
 		else
 			el.hide()
+
+Attribute = 
+	keys: [ "attr" ]
+	bind: (operators,model,el) ->
+		model.bind("update", => @update(operators,model,el))
+		@update(operators,model,el)
+
+	unbind: (operators,model,el) ->
+		model.unbind("update")
+
+	update: (operators,model,el) ->
+		operator = operators.filter((e) -> e.name is "attr")[0]
+		json = JSON.parse(operator.property)
+		for property of json
+			el.attr(property,model[json[property]])
 			
 DataBind =
-	binders: [ Update, Options, Click, Enable, Visible ]
+	binders: [ Update, Options, Click, Enable, Visible, Attribute ]
 
 	initializeBindings: (model) ->
 		@trigger "destroy-bindings"
@@ -214,7 +229,7 @@ DataBind =
 			databind = e.data("bind").split(",")
 			attributes = databind.map (item) ->
 				fullString = trim(item)
-				match = fullString.match(/(.*):(.*)/)
+				match = fullString.match(/(\w+):(.*)/)
 				name = match[1]
 				value = trim(match[2])
 

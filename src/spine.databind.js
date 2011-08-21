@@ -1,5 +1,5 @@
 (function() {
-  var Click, DataBind, Enable, Options, Template, Update, Visible;
+  var Attribute, Click, DataBind, Enable, Options, Template, Update, Visible;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   Template = {
     keys: [],
@@ -200,8 +200,32 @@
       }
     }
   };
+  Attribute = {
+    keys: ["attr"],
+    bind: function(operators, model, el) {
+      model.bind("update", __bind(function() {
+        return this.update(operators, model, el);
+      }, this));
+      return this.update(operators, model, el);
+    },
+    unbind: function(operators, model, el) {
+      return model.unbind("update");
+    },
+    update: function(operators, model, el) {
+      var json, operator, property, _results;
+      operator = operators.filter(function(e) {
+        return e.name === "attr";
+      })[0];
+      json = JSON.parse(operator.property);
+      _results = [];
+      for (property in json) {
+        _results.push(el.attr(property, model[json[property]]));
+      }
+      return _results;
+    }
+  };
   DataBind = {
-    binders: [Update, Options, Click, Enable, Visible],
+    binders: [Update, Options, Click, Enable, Visible, Attribute],
     initializeBindings: function(model) {
       var addElement, controller, element, elements, findBinder, info, init, key, parse, property, splitter, trim, _i, _len;
       this.trigger("destroy-bindings");
@@ -288,7 +312,7 @@
         attributes = databind.map(function(item) {
           var fullString, match, name, value;
           fullString = trim(item);
-          match = fullString.match(/(.*):(.*)/);
+          match = fullString.match(/(\w+):(.*)/);
           name = match[1];
           value = trim(match[2]);
           return {

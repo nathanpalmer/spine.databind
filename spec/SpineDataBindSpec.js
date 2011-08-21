@@ -8,7 +8,8 @@ describe("Spine.DataBind", function() {
 			"phoneNumbers", 
 			"phoneNumbersSelected",
 			"person",
-			"title"
+			"title",
+			"homepage"
 		]);
 
 		PersonController = Spine.Controller.create({
@@ -417,6 +418,57 @@ describe("Spine.DataBind", function() {
 
 			Tests();
 		});	
+	});
+
+	describe("Attr", function() {
+		var Person, Controller;
+
+		var Tests = function() {
+			it("should bind to href", function() {
+				var a = $('#homepage');
+				expect(a.attr('href')).toBe('http://www.example.com');
+			});
+		};
+
+		describe("with bindings", function() {
+			beforeEach(function() {
+				setFixtures("<a id='homepage'/>");
+				
+				Person = PersonCollection.create({ 
+					firstName: "Nathan", 
+					lastName: "Palmer",
+					homepage: "http://www.example.com",
+					phoneNumbers: []
+				});
+
+				PersonController.include({
+					bindings: {
+						"attr a":'{ "href": "homepage" }'
+					}
+				});
+
+				Controller = PersonController.init({ el: 'body', model:Person });
+			});
+
+			Tests();			
+		});
+
+		describe("with data-bind", function() {
+			beforeEach(function() {
+				setFixtures("<a id='homepage' data-bind='attr: { \"href\": \"homepage\" }'/>");
+				
+				Person = PersonCollection.create({ 
+					firstName: "Nathan", 
+					lastName: "Palmer",
+					homepage: "http://www.example.com",
+					phoneNumbers: []
+				});
+
+				Controller = PersonController.init({ el: 'body', model:Person });
+			});
+
+			Tests();
+		});
 	});
 
 	xdescribe("Submit", function() {
