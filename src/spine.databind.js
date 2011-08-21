@@ -1,6 +1,6 @@
 (function() {
   var Click, DataBind, Enable, Options, Template, Update, Visible;
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; }, __slice = Array.prototype.slice;
+  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   Template = {
     keys: [],
     bind: function(operators, model, el) {},
@@ -202,9 +202,8 @@
   };
   DataBind = {
     binders: [Update, Options, Click, Enable, Visible],
-    initializeBindings: function() {
-      var addElement, args, controller, element, elements, findBinder, info, init, key, parse, property, splitter, trim, _i, _len;
-      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+    initializeBindings: function(model) {
+      var addElement, controller, element, elements, findBinder, info, init, key, parse, property, splitter, trim, _i, _len;
       this.trigger("destroy-bindings");
       controller = this;
       splitter = /(\w+)(\[?.*]?) (.*)/;
@@ -262,9 +261,8 @@
         };
       };
       init = function(element) {
-        var el, model, operators;
+        var el, operators;
         operators = element.operators;
-        model = controller.model;
         el = element.el;
         element.binder.bind(operators, model, el);
         controller.bind("destroy", function() {

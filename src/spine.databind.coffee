@@ -138,7 +138,7 @@ Visible =
 DataBind =
 	binders: [ Update, Options, Click, Enable, Visible ]
 
-	initializeBindings: (args...) ->
+	initializeBindings: (model) ->
 		@trigger "destroy-bindings"
 
 		controller = this
@@ -191,7 +191,6 @@ DataBind =
 
 		init = (element) ->
 			operators = element.operators
-			model = controller.model
 			el = element.el
 
 			element.binder.bind(operators,model,el)

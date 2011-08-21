@@ -21,10 +21,72 @@ describe("Spine.DataBind", function() {
 	});
 
 	describe("Update", function() {
+		var Person, Controller;
+
+		var Tests = function() {
+			it("should bind span", function() {
+				var firstNameSpan = $('#firstNameSpan');
+				var firstNameSpanText = firstNameSpan.text();
+
+				expect(firstNameSpanText).toBe("Nathan");
+			});
+
+			it("should bind div", function() {
+				var firstNameDiv = $('#firstNameDiv');
+				var firstNameDivText = firstNameDiv.text();
+
+				expect(firstNameDivText).toBe("Nathan");
+			});
+
+			it("should bind on input", function() {
+				var firstNameInput = $('#firstName');
+				var firstNameInputText = firstNameInput.val();
+
+				expect(firstNameInputText).toBe("Nathan");
+			});
+
+			it("should change model when changed on input", function() {
+				var firstNameInput = $('#firstName');
+				firstNameInput.val("Eric");
+				firstNameInput.trigger("change");
+
+				expect(Person.firstName).toBe("Eric");	
+			});
+
+			it("should bind on textarea", function() {
+				var firstNameInput = $('#firstNameTextArea');
+				var firstNameInputText = firstNameInput.val();
+
+				expect(firstNameInputText).toBe("Nathan");
+			});
+
+			it("should change model when changed on textarea", function() {
+				var firstNameInput = $('#firstNameTextArea');
+				firstNameInput.val("Eric");
+				firstNameInput.trigger("change");
+
+				expect(Person.firstName).toBe("Eric");	
+			});
+
+			it("should bind on select", function() {
+				var firstNameInput = $('#firstNameSelect');
+				var firstNameInputText = firstNameInput.find("option:selected").val();
+
+				expect(firstNameInputText).toBe("Nathan");
+			});
+
+			it("should change model when changed on select", function() {
+				expect(Person.firstName).toBe("Nathan");
+
+				var firstNameInput = $('#firstNameSelect');
+				firstNameInput.find("option[value='Eric']").attr("selected", "selected");
+				firstNameInput.trigger("change");
+
+				expect(Person.firstName).toBe("Eric");
+			});
+		};
 
 		describe("with bindings", function() {
-			var Person, Controller;
-
 			beforeEach(function() {
 				setFixtures([
 					"<span id='firstNameSpan'/>",
@@ -48,72 +110,10 @@ describe("Spine.DataBind", function() {
 				Controller = PersonController.init({ el: 'body', model:Person });
 			});
 
-			it("should bind span", function() {
-				var firstNameSpan = $('#firstNameSpan');
-				var firstNameSpanText = firstNameSpan.text();
-
-				expect(firstNameSpanText).toBe("Nathan");
-			});
-
-			it("should bind div", function() {
-				var firstNameDiv = $('#firstNameDiv');
-				var firstNameDivText = firstNameDiv.text();
-
-				expect(firstNameDivText).toBe("Nathan");
-			});
-
-			it("should bind on input", function() {
-				var firstNameInput = $('#firstName');
-				var firstNameInputText = firstNameInput.val();
-
-				expect(firstNameInputText).toBe("Nathan");
-			});
-
-			it("should change model when changed on input", function() {
-				var firstNameInput = $('#firstName');
-				firstNameInput.val("Eric");
-				firstNameInput.trigger("change");
-
-				expect(Person.firstName).toBe("Eric");	
-			});
-
-			it("should bind on textarea", function() {
-				var firstNameInput = $('#firstNameTextArea');
-				var firstNameInputText = firstNameInput.val();
-
-				expect(firstNameInputText).toBe("Nathan");
-			});
-
-			it("should change model when changed on textarea", function() {
-				var firstNameInput = $('#firstNameTextArea');
-				firstNameInput.val("Eric");
-				firstNameInput.trigger("change");
-
-				expect(Person.firstName).toBe("Eric");	
-			});
-
-			it("should bind on select", function() {
-				var firstNameInput = $('#firstNameSelect');
-				var firstNameInputText = firstNameInput.find("option:selected").val();
-
-				expect(firstNameInputText).toBe("Nathan");
-			});
-
-			it("should change model when changed on select", function() {
-				expect(Person.firstName).toBe("Nathan");
-
-				var firstNameInput = $('#firstNameSelect');
-				firstNameInput.find("option[value='Eric']").attr("selected", "selected");
-				firstNameInput.trigger("change");
-
-				expect(Person.firstName).toBe("Eric");
-			});
-
+			Tests();
 		});
 
 		describe("with data-bind", function() {
-			var Person, Controller;
-
 			beforeEach(function() {
 				setFixtures([
 					"<span id='firstNameSpan' data-bind='text: firstName'/>",
@@ -127,72 +127,31 @@ describe("Spine.DataBind", function() {
 				Controller = PersonController.init({ el: 'body', model:Person });
 			});
 
-			it("should bind span", function() {
-				var firstNameSpan = $('#firstNameSpan');
-				var firstNameSpanText = firstNameSpan.text();
-
-				expect(firstNameSpanText).toBe("Nathan");
-			});
-
-			it("should bind div", function() {
-				var firstNameDiv = $('#firstNameDiv');
-				var firstNameDivText = firstNameDiv.text();
-
-				expect(firstNameDivText).toBe("Nathan");
-			});
-
-			it("should bind on input", function() {
-				var firstNameInput = $('#firstName');
-				var firstNameInputText = firstNameInput.val();
-
-				expect(firstNameInputText).toBe("Nathan");
-			});
-
-			it("should change model when changed on input", function() {
-				var firstNameInput = $('#firstName');
-				firstNameInput.val("Eric");
-				firstNameInput.trigger("change");
-
-				expect(Person.firstName).toBe("Eric");	
-			});
-
-			it("should bind on textarea", function() {
-				var firstNameInput = $('#firstNameTextArea');
-				var firstNameInputText = firstNameInput.val();
-
-				expect(firstNameInputText).toBe("Nathan");
-			});
-
-			it("should change model when changed on textarea", function() {
-				var firstNameInput = $('#firstNameTextArea');
-				firstNameInput.val("Eric");
-				firstNameInput.trigger("change");
-
-				expect(Person.firstName).toBe("Eric");	
-			});
-
-			it("should bind on select", function() {
-				var firstNameInput = $('#firstNameSelect');
-				var firstNameInputText = firstNameInput.find("option:selected").val();
-
-				expect(firstNameInputText).toBe("Nathan");
-			});
-
-			it("should change model when changed on select", function() {
-				expect(Person.firstName).toBe("Nathan");
-
-				var firstNameInput = $('#firstNameSelect');
-				firstNameInput.find("option[value='Eric']").attr("selected", "selected");
-				firstNameInput.trigger("change");
-
-				expect(Person.firstName).toBe("Eric");
-			});
-
+			Tests();
 		});
 	});
 
 	describe("Options", function() {
-		var Person;
+		var Person, Controller;
+
+		var Tests = function() {
+			it("should create options", function() {
+				var phoneNumberSelect = $('#phoneNumbers');
+				var phoneNumberHtml = [
+					'<option value="555-555-1010">555-555-1010</option>',
+					'<option value="555-101-9999">555-101-9999</option>'
+				].join("");
+				expect(phoneNumberSelect.html()).toBe(phoneNumberHtml);
+			});
+
+			it("should bind selectedOptions", function() {
+				var phoneNumberSelect = $('#phoneNumbers');
+				phoneNumberSelect.find("option[value='555-101-9999']").attr("selected", "selected");
+				phoneNumberSelect.trigger("change");
+				expect(Person.phoneNumbersSelected.length).toBe(1);
+				expect(Person.phoneNumbersSelected[0]).toBe(Person.phoneNumbers[1]);
+			});
+		};
 
 		describe("with bindings", function() {
 			beforeEach(function() {
@@ -217,22 +176,7 @@ describe("Spine.DataBind", function() {
 				Controller = PersonController.init({ el: 'body', model:Person });
 			});
 
-			it("should create options", function() {
-				var phoneNumberSelect = $('#phoneNumbers');
-				var phoneNumberHtml = [
-					'<option value="555-555-1010">555-555-1010</option>',
-					'<option value="555-101-9999">555-101-9999</option>'
-				].join("");
-				expect(phoneNumberSelect.html()).toBe(phoneNumberHtml);
-			});
-
-			it("should bind selectedOptions", function() {
-				var phoneNumberSelect = $('#phoneNumbers');
-				phoneNumberSelect.find("option[value='555-101-9999']").attr("selected", "selected");
-				phoneNumberSelect.trigger("change");
-				expect(Person.phoneNumbersSelected.length).toBe(1);
-				expect(Person.phoneNumbersSelected[0]).toBe(Person.phoneNumbers[1]);
-			});
+			Tests();			
 		});
 
 		describe("with data-bind", function() {
@@ -251,29 +195,24 @@ describe("Spine.DataBind", function() {
 				Controller = PersonController.init({ el: 'body', model:Person });
 			});
 
-			it("should create options", function() {
-				var phoneNumberSelect = $('#phoneNumbers');
-				var phoneNumberHtml = [
-					'<option value="555-555-1010">555-555-1010</option>',
-					'<option value="555-101-9999">555-101-9999</option>'
-				].join("");
-				expect(phoneNumberSelect.html()).toBe(phoneNumberHtml);
-			});
-
-			it("should bind selectedOptions", function() {
-				var phoneNumberSelect = $('#phoneNumbers');
-				phoneNumberSelect.find("option[value='555-101-9999']").attr("selected", "selected");
-				phoneNumberSelect.trigger("change");
-				expect(Person.phoneNumbersSelected.length).toBe(1);
-				expect(Person.phoneNumbersSelected[0]).toBe(Person.phoneNumbers[1]);
-			});
+			Tests();
 		});
 
 		
 	});
 
 	describe("Click", function() {
-		var Person;
+		var Person, Controller;
+
+		var Tests = function() {
+			it("should reset name", function() {
+				expect(Person.firstName).toBe("Nathan");
+
+				$('#reset').click();
+
+				expect(Person.firstName).toBe("Reset");
+			});
+		};
 
 		describe("with bindings", function() {
 			beforeEach(function() {
@@ -300,13 +239,7 @@ describe("Spine.DataBind", function() {
 				Controller = PersonController.init({ el: 'body', model:Person });
 			});
 
-			it("should reset name", function() {
-				expect(Person.firstName).toBe("Nathan");
-
-				$('#reset').click();
-
-				expect(Person.firstName).toBe("Reset");
-			});
+			Tests();
 		});
 
 		describe("with data-bind", function() {
@@ -328,20 +261,29 @@ describe("Spine.DataBind", function() {
 				Controller = PersonController.init({ el: 'body', model:Person });
 			});
 
-			it("should reset name", function() {
-				expect(Person.firstName).toBe("Nathan");
-
-				$('#reset').click();
-
-				expect(Person.firstName).toBe("Reset");
-			});
+			Tests();
 		});
 	});
 
 	describe("Enable", function() {
-		describe("with bindings", function() {
-			var Person;
+		var Person, Controller;
 
+		var Tests = function() {
+			it("should start out disabled", function() {
+				var reset = $('#reset');
+				expect(reset.attr('disabled')).toBe('disabled');
+			});
+
+			it("should enable when phone numbers present", function() {
+				Person.phoneNumbers.push("555-555-9090");
+				Person.save();
+
+				var reset = $('#reset');
+				expect(reset.attr('disabled')).toBe(undefined);
+			});	
+		};
+
+		describe("with bindings", function() {
 			beforeEach(function() {
 				PersonCollection.include({
 					phoneNumberCount: function() {
@@ -370,23 +312,10 @@ describe("Spine.DataBind", function() {
 				Controller = PersonController.init({ el: 'body', model:Person });
 			});
 
-			it("should start out disabled", function() {
-				var reset = $('#reset');
-				expect(reset.attr('disabled')).toBe('disabled');
-			});
-
-			it("should enable when phone numbers present", function() {
-				Person.phoneNumbers.push("555-555-9090");
-				Person.save();
-
-				var reset = $('#reset');
-				expect(reset.attr('disabled')).toBe(undefined);
-			});
+			Tests();
 		});
 		
 		describe("with data-bind", function() {
-			var Person;
-
 			beforeEach(function() {
 				PersonCollection.include({
 					phoneNumberCount: function() {
@@ -409,26 +338,29 @@ describe("Spine.DataBind", function() {
 				Controller = PersonController.init({ el: 'body', model:Person });
 			});
 
-			it("should start out disabled", function() {
-				var reset = $('#reset');
-				expect(reset.attr('disabled')).toBe('disabled');
-			});
-
-			it("should enable when phone numbers present", function() {
-				Person.phoneNumbers.push("555-555-9090");
-				Person.save();
-
-				var reset = $('#reset');
-				expect(reset.attr('disabled')).toBe(undefined);
-			});
+			Tests();
 		});	
 	});
 	
 	describe("Visible", function() {
+		var Person, Controller;
+
+		var Tests = function() {
+			it("should start out hidden", function() {
+				var reset = $('#reset');
+				expect(reset.css('display')).toBe('none');
+			});
+
+			it("should display when phone numbers present", function() {
+				Person.phoneNumbers.push("555-555-9090");
+				Person.save();
+
+				var reset = $('#reset');
+				expect(reset.css('display')).toBe('inline-block');
+			});	
+		};
 
 		describe("with bindings", function() {
-			var Person;
-
 			beforeEach(function() {
 				PersonCollection.include({
 					phoneNumberCount: function() {
@@ -457,23 +389,10 @@ describe("Spine.DataBind", function() {
 				Controller = PersonController.init({ el: 'body', model:Person });
 			});
 
-			it("should start out hidden", function() {
-				var reset = $('#reset');
-				expect(reset.css('display')).toBe('none');
-			});
-
-			it("should display when phone numbers present", function() {
-				Person.phoneNumbers.push("555-555-9090");
-				Person.save();
-
-				var reset = $('#reset');
-				expect(reset.css('display')).toBe('inline-block');
-			});
+			Tests();			
 		});
 
 		describe("with data-bind", function() {
-			var Person;
-
 			beforeEach(function() {
 				PersonCollection.include({
 					phoneNumberCount: function() {
@@ -496,21 +415,9 @@ describe("Spine.DataBind", function() {
 				Controller = PersonController.init({ el: 'body', model:Person });
 			});
 
-			it("should start out hidden", function() {
-				var reset = $('#reset');
-				expect(reset.css('display')).toBe('none');
-			});
-
-			it("should display when phone numbers present", function() {
-				Person.phoneNumbers.push("555-555-9090");
-				Person.save();
-
-				var reset = $('#reset');
-				expect(reset.css('display')).toBe('inline-block');
-			});
+			Tests();
 		});	
 	});
-	
 
 	xdescribe("Submit", function() {
 		var Person;
