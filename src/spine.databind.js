@@ -50,7 +50,6 @@
         for (_i = 0, _len = operators.length; _i < _len; _i++) {
           operator = operators[_i];
           value = DataBind.eval(model, operator.property);
-          console.log("Update " + this.tagName + " " + operator.property + " " + value);
           _results.push((function() {
             switch (this.tagName) {
               case "INPUT":
@@ -250,7 +249,7 @@
       if (this.type === "radio") {
         return model.updateAttribute(operator.property, el.val());
       } else {
-        value = el.attr("checked") === "checked";
+        value = el.attr("checked") === "checked" || el.attr("checked") === true;
         return model.updateAttribute(operator.property, value);
       }
     },
@@ -262,10 +261,10 @@
       result = DataBind.eval(model, operator.property);
       value = el.val();
       if (this.type === "radio") {
-        if (result === !value) {
-          return el.removeAttr("checked");
-        } else {
+        if (result === value) {
           return el.attr("checked", "checked");
+        } else {
+          return el.removeAttr("checked");
         }
       } else {
         if (!result) {

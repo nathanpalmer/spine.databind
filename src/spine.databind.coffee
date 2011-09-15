@@ -30,7 +30,7 @@ Update =
 			e = $(@)
 			for operator in operators
 				value = DataBind.eval(model,operator.property)
-				console.log "Update #{@tagName} #{operator.property} #{value}"
+				#console.log "Update #{@tagName} #{operator.property} #{value}"
 				switch @tagName
 					when "INPUT", "TEXTAREA"
 						e.val(value)
@@ -171,7 +171,7 @@ Checked =
 		if @type is "radio"
 			model.updateAttribute(operator.property, el.val())
 		else
-			value = el.attr("checked") is "checked"
+			value = el.attr("checked") is "checked" or el.attr("checked") is true
 			model.updateAttribute(operator.property, value)
 
 	update: (operators,model,el) ->
@@ -180,10 +180,10 @@ Checked =
 		value = el.val()
 
 		if @type is "radio"
-			if result is not value
-				el.removeAttr("checked")
-			else
+			if result is value
 				el.attr("checked", "checked")
+			else
+				el.removeAttr("checked")
 		else
 			if not result
 				el.removeAttr("checked")
