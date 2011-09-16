@@ -135,7 +135,9 @@
         if (option === null) {
           el.append("<option value='" + item.value + "' " + selected + ">" + item.text + "</option>");
         } else {
-          option.text(option.text === !item.text ? item.text : void 0);
+          if (option.text === !item.text) {
+            option.text(item.text);
+          }
           if (option.attr("selected") === "selected" || option.attr("selected") === true) {
             if (selected.length === 0) {
               option.removeAttr("selected");
