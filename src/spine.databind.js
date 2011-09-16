@@ -276,7 +276,6 @@
   Checked = {
     keys: ["checked"],
     bind: function(operators, model, el) {
-      this.type = el.attr("type");
       el.bind("change", __bind(function() {
         return this.change(operators, model, el);
       }, this));
@@ -289,13 +288,12 @@
       el.unbind("change");
       return model.unbind("change");
     },
-    type: null,
     change: function(operators, model, el) {
       var operator, value;
       operator = operators.filter(function(e) {
         return e.name === "checked";
       })[0];
-      if (this.type === "radio") {
+      if (el.attr("type") === "radio") {
         return model.updateAttribute(operator.property, el.val());
       } else {
         value = el.attr("checked") === "checked" || el.attr("checked") === true;
@@ -309,7 +307,7 @@
       })[0];
       result = DataBind.eval(model, operator.property);
       value = el.val();
-      if (this.type === "radio") {
+      if (el.attr("type") === "radio") {
         if (result === value) {
           return el.attr("checked", "checked");
         } else {

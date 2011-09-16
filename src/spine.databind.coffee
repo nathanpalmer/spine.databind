@@ -174,7 +174,6 @@ Checked =
 	keys: [ "checked" ]
 
 	bind: (operators,model,el) ->
-		@type = el.attr("type")
 		el.bind("change", => @change(operators,model,el))
 		model.bind("change", => @update(operators,model,el))
 		@update(operators,model,el)
@@ -183,11 +182,9 @@ Checked =
 		el.unbind("change")
 		model.unbind("change")
 
-	type: null
-
 	change: (operators,model,el) ->
 		operator = operators.filter((e) -> e.name is "checked")[0]
-		if @type is "radio"
+		if el.attr("type") is "radio"
 			model.updateAttribute(operator.property, el.val())
 		else
 			value = el.attr("checked") is "checked" or el.attr("checked") is true
@@ -198,7 +195,7 @@ Checked =
 		result = DataBind.eval(model,operator.property)
 		value = el.val()
 
-		if @type is "radio"
+		if el.attr("type") is "radio"
 			if result is value
 				el.attr("checked", "checked")
 			else
