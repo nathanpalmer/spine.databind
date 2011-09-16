@@ -7,6 +7,8 @@ describe("Spine.DataBind", function() {
 			"lastName", 
 			"phoneNumbers", 
 			"phoneNumbersSelected",
+			"company",
+			"companies",
 			"person",
 			"title",
 			"homepage"
@@ -152,25 +154,38 @@ describe("Spine.DataBind", function() {
 				expect(Person.phoneNumbersSelected.length).toBe(1);
 				expect(Person.phoneNumbersSelected[0]).toBe(Person.phoneNumbers[1]);
 			});
+
+			it("should bind hashes", function() {
+				var companySelect = $('#company');
+				var companyHtml = [
+					'<option value="0">Google</option>',
+					'<option value="1">Apple</option>'
+				].join("");
+				expect(companySelect.html()).toBe(companyHtml);
+			});
 		};
 
 		describe("with bindings", function() {
 			beforeEach(function() {
 				setFixtures([
-					"<select id='phoneNumbers'/>"
+					"<select id='phoneNumbers'/>",
+					"<select id='company'/>"
 				].join(""));
 
 				Person = PersonCollection.create({ 
 					firstName: "Nathan", 
 					lastName: "Palmer",
 					phoneNumbers: [ "555-555-1010", "555-101-9999" ],
-					phoneNumbersSelected: []
+					phoneNumbersSelected: [],
+					company: "",
+					companies: { 0: "Google", 1: "Apple" }
 				});
 
 				PersonController.include({
 					bindings: {
-						"options select":"phoneNumbers",
-						"selectedOptions select":"phoneNumbersSelected"
+						"options #phoneNumbers":"phoneNumbers",
+						"selectedOptions select":"phoneNumbersSelected",
+						"options #company":"companies"
 					}
 				});
 
@@ -183,14 +198,17 @@ describe("Spine.DataBind", function() {
 		describe("with data-bind", function() {
 			beforeEach(function() {
 				setFixtures([
-					"<select id='phoneNumbers' data-bind='options: phoneNumbers, selectedOptions: phoneNumbersSelected'/>"
+					"<select id='phoneNumbers' data-bind='options: phoneNumbers, selectedOptions: phoneNumbersSelected'/>",
+					"<select id='company' data-bind='options: companies'/>"
 				].join(""));
 
 				Person = PersonCollection.create({ 
 					firstName: "Nathan", 
 					lastName: "Palmer",
 					phoneNumbers: [ "555-555-1010", "555-101-9999" ],
-					phoneNumbersSelected: []
+					phoneNumbersSelected: [],
+					company: "",
+					companies: { 0: "Google", 1: "Apple" }
 				});
 
 				Controller = PersonController.init({ el: 'body', model:Person });

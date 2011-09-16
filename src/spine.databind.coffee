@@ -63,14 +63,19 @@ Options =
 		array = DataBind.eval(model,ops.property)
 		options = el.children('options')
 
-		for item,index in array
+		if array instanceof Array
+			result = ({ text: item, value: item} for item in array)
+		else
+			result = ({ text: array[key], value: key } for key of array)				
+
+		for item,index in result
 			option = if options.length > index then options[index] else null
-			selected = if selectedOptions.indexOf(item) >= 0 then "selected='selected'" else ""
+			selected = if selectedOptions.indexOf(item.value) >= 0 then "selected='selected'" else ""
 
 			if option is null
-				el.append "<option value='#{item}' #{selected}>#{item}</option>"
+				el.append "<option value='#{item.value}' #{selected}>#{item.text}</option>"
 			else
-				option.text = item if option.text is not item
+				option.text = item.text if option.text is not item.text
 
 		if options.length > array.length
 			for index in [array.length..options.length]

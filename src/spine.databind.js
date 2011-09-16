@@ -89,7 +89,7 @@
       return model.unbind("update");
     },
     update: function(operators, model, el) {
-      var array, index, item, ops, opsSelected, option, options, selected, selectedOptions, _len, _ref, _ref2, _results;
+      var array, index, item, key, ops, opsSelected, option, options, result, selected, selectedOptions, _len, _ref, _ref2, _results;
       ops = operators.filter(function(e) {
         return e.name === "options";
       })[0];
@@ -99,15 +99,41 @@
       selectedOptions = opsSelected.length === 1 ? DataBind.eval(model, opsSelected[0].property) : [];
       array = DataBind.eval(model, ops.property);
       options = el.children('options');
-      for (index = 0, _len = array.length; index < _len; index++) {
-        item = array[index];
+      if (array instanceof Array) {
+        result = (function() {
+          var _i, _len, _results;
+          _results = [];
+          for (_i = 0, _len = array.length; _i < _len; _i++) {
+            item = array[_i];
+            _results.push({
+              text: item,
+              value: item
+            });
+          }
+          return _results;
+        })();
+      } else {
+        result = (function() {
+          var _results;
+          _results = [];
+          for (key in array) {
+            _results.push({
+              text: array[key],
+              value: key
+            });
+          }
+          return _results;
+        })();
+      }
+      for (index = 0, _len = result.length; index < _len; index++) {
+        item = result[index];
         option = options.length > index ? options[index] : null;
-        selected = selectedOptions.indexOf(item) >= 0 ? "selected='selected'" : "";
+        selected = selectedOptions.indexOf(item.value) >= 0 ? "selected='selected'" : "";
         if (option === null) {
-          el.append("<option value='" + item + "' " + selected + ">" + item + "</option>");
+          el.append("<option value='" + item.value + "' " + selected + ">" + item.text + "</option>");
         } else {
-          if (option.text === !item) {
-            option.text = item;
+          if (option.text === !item.text) {
+            option.text = item.text;
           }
         }
       }
