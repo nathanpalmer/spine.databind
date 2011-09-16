@@ -98,7 +98,7 @@
       });
       selectedOptions = opsSelected.length === 1 ? DataBind.eval(model, opsSelected[0].property) : [];
       array = DataBind.eval(model, ops.property);
-      options = el.children('options');
+      options = el.children('option');
       if (array instanceof Array) {
         result = (function() {
           var _i, _len, _results;
@@ -152,7 +152,7 @@
       })[0];
       items = [];
       el.find("option:selected").each(function() {
-        return items.push($(this).text());
+        return items.push($(this).val());
       });
       if (model[operator.property] instanceof Array || items.length > 1) {
         model[operator.property] = [];

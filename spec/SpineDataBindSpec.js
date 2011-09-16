@@ -168,7 +168,7 @@ describe("Spine.DataBind", function() {
 				var companySelect = $('#company');
 				companySelect.find('option[value="0"]').attr("selected", "selected");
 				companySelect.trigger("change");
-				expect(Person.company).toBe(Person.companies[0]);
+				expect(Person.company).toBe("0");
 			});
 		};
 

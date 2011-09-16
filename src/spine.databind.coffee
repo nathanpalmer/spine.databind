@@ -61,7 +61,7 @@ Options =
 		selectedOptions = if opsSelected.length is 1 then DataBind.eval(model,opsSelected[0].property) else [] 
 
 		array = DataBind.eval(model,ops.property)
-		options = el.children('options')
+		options = el.children('option')
 
 		if array instanceof Array
 			result = ({ text: item, value: item} for item in array)
@@ -86,7 +86,7 @@ Options =
 		
 		items = []
 		el.find("option:selected").each(() ->
-			items.push($(this).text())
+			items.push($(this).val())
 		)
 
 		if model[operator.property] instanceof Array or items.length > 1
