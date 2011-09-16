@@ -146,14 +146,22 @@
       }
     },
     change: function(operators, model, el) {
-      var operator;
+      var items, operator;
       operator = operators.filter(function(e) {
         return e.name === "selectedOptions";
       })[0];
-      model[operator.property] = [];
+      items = [];
       el.find("option:selected").each(function() {
-        return model[operator.property].push($(this).text());
+        return items.push($(this).text());
       });
+      if (model[operator.property] instanceof Array || items.length > 1) {
+        model[operator.property] = [];
+        model[operator.property] = model[operator.property].concat(items);
+      } else {
+        if (items.length === 1) {
+          model[operator.property] = items[0];
+        }
+      }
       return model.save();
     }
   };
@@ -336,7 +344,7 @@
           };
           elements.push(element);
         } else {
-          element = elements[0];
+          element = matching[0];
         }
         return element.operators.push({
           name: info.name,

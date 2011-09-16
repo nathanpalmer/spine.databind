@@ -22,7 +22,7 @@ describe("Spine.DataBind", function() {
 
 		PersonController.include(Spine.DataBind);
 	});
-
+	
 	describe("Update", function() {
 		var Person, Controller;
 
@@ -133,7 +133,7 @@ describe("Spine.DataBind", function() {
 			Tests();
 		});
 	});
-
+	
 	describe("Options", function() {
 		var Person, Controller;
 
@@ -163,6 +163,13 @@ describe("Spine.DataBind", function() {
 				].join("");
 				expect(companySelect.html()).toBe(companyHtml);
 			});
+
+			it("should bind hashes and selectedOptions", function() {
+				var companySelect = $('#company');
+				companySelect.find('option[value="0"]').attr("selected", "selected");
+				companySelect.trigger("change");
+				expect(Person.company).toBe(Person.companies[0]);
+			});
 		};
 
 		describe("with bindings", function() {
@@ -184,8 +191,9 @@ describe("Spine.DataBind", function() {
 				PersonController.include({
 					bindings: {
 						"options #phoneNumbers":"phoneNumbers",
-						"selectedOptions select":"phoneNumbersSelected",
-						"options #company":"companies"
+						"selectedOptions #phoneNumbers":"phoneNumbersSelected",
+						"options #company":"companies",
+						"selectedOptions #company":"company"
 					}
 				});
 
@@ -199,7 +207,7 @@ describe("Spine.DataBind", function() {
 			beforeEach(function() {
 				setFixtures([
 					"<select id='phoneNumbers' data-bind='options: phoneNumbers, selectedOptions: phoneNumbersSelected'/>",
-					"<select id='company' data-bind='options: companies'/>"
+					"<select id='company' data-bind='options: companies, selectedOptions: company'/>"
 				].join(""));
 
 				Person = PersonCollection.create({ 
@@ -219,7 +227,7 @@ describe("Spine.DataBind", function() {
 
 		
 	});
-
+	
 	describe("Click", function() {
 		var Person, Controller;
 
@@ -629,5 +637,4 @@ describe("Spine.DataBind", function() {
 			expect(mrs.attr('checked')).toBe('checked');
 		})
 	});
-
 });

@@ -84,10 +84,18 @@ Options =
 	change: (operators,model,el) ->
 		operator = operators.filter((e) -> e.name is "selectedOptions")[0]
 		
-		model[operator.property] = [];
+		items = []
 		el.find("option:selected").each(() ->
-			model[operator.property].push($(this).text())
+			items.push($(this).text())
 		)
+
+		if model[operator.property] instanceof Array or items.length > 1
+			model[operator.property] = []
+			model[operator.property] = model[operator.property].concat(items)
+		else
+			if items.length is 1
+				model[operator.property] = items[0]
+
 		model.save()
 
 Click = 
@@ -224,7 +232,7 @@ DataBind =
 
 				elements.push(element)
 			else
-				element = elements[0]
+				element = matching[0]
 
 			element.operators.push({
 				name: info.name
