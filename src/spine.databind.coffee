@@ -59,8 +59,8 @@ Options =
 		ops = operators.filter((e) -> e.name is "options")[0]
 		opsSelected = operators.filter((e) -> e.name is "selectedOptions")
 		selectedOptions = if opsSelected.length is 1 then DataBind.eval(model,opsSelected[0].property) else [] 
-		if not selectedOptions instanceof Array
-			selectedOptions = [selectedOptions]
+		selectedOptions = [selectedOptions] if not (selectedOptions instanceof Array)
+			
 		array = DataBind.eval(model,ops.property)
 		options = el.children('option')
 

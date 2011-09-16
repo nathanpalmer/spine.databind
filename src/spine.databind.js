@@ -97,7 +97,7 @@
         return e.name === "selectedOptions";
       });
       selectedOptions = opsSelected.length === 1 ? DataBind.eval(model, opsSelected[0].property) : [];
-      if (!selectedOptions instanceof Array) {
+      if (!(selectedOptions instanceof Array)) {
         selectedOptions = [selectedOptions];
       }
       array = DataBind.eval(model, ops.property);
