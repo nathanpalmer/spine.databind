@@ -97,6 +97,9 @@
         return e.name === "selectedOptions";
       });
       selectedOptions = opsSelected.length === 1 ? DataBind.eval(model, opsSelected[0].property) : [];
+      if (!selectedOptions instanceof Array) {
+        selectedOptions = [selectedOptions];
+      }
       array = DataBind.eval(model, ops.property);
       options = el.children('option');
       if (array instanceof Array) {
@@ -127,13 +130,20 @@
       }
       for (index = 0, _len = result.length; index < _len; index++) {
         item = result[index];
-        option = options.length > index ? options[index] : null;
+        option = options.length > index ? $(options[index]) : null;
         selected = selectedOptions.indexOf(item.value) >= 0 ? "selected='selected'" : "";
         if (option === null) {
           el.append("<option value='" + item.value + "' " + selected + ">" + item.text + "</option>");
         } else {
-          if (option.text === !item.text) {
-            option.text = item.text;
+          option.text(option.text === !item.text ? item.text : void 0);
+          if (option.attr("selected") === "selected" || option.attr("selected") === true) {
+            if (selected.length === 0) {
+              option.removeAttr("selected");
+            }
+          } else {
+            if (selected.length > 0) {
+              option.attr("selected", "selected");
+            }
           }
         }
       }

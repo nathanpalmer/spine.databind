@@ -59,7 +59,8 @@ Options =
 		ops = operators.filter((e) -> e.name is "options")[0]
 		opsSelected = operators.filter((e) -> e.name is "selectedOptions")
 		selectedOptions = if opsSelected.length is 1 then DataBind.eval(model,opsSelected[0].property) else [] 
-
+		if not selectedOptions instanceof Array
+			selectedOptions = [selectedOptions]
 		array = DataBind.eval(model,ops.property)
 		options = el.children('option')
 
@@ -69,14 +70,18 @@ Options =
 			result = ({ text: array[key], value: key } for key of array)				
 
 		for item,index in result
-			option = if options.length > index then options[index] else null
+			option = if options.length > index then $(options[index]) else null
 			selected = if selectedOptions.indexOf(item.value) >= 0 then "selected='selected'" else ""
 
 			if option is null
 				el.append "<option value='#{item.value}' #{selected}>#{item.text}</option>"
 			else
-				option.text = item.text if option.text is not item.text
-
+				option.text(item.text if option.text is not item.text)
+				if option.attr("selected") is "selected" or option.attr("selected") is true
+					option.removeAttr("selected") if selected.length is 0
+				else
+					option.attr("selected","selected") if selected.length > 0
+					
 		if options.length > array.length
 			for index in [array.length..options.length]
 				$(options[index]).remove()
