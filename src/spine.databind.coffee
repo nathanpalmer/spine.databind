@@ -76,7 +76,8 @@ Options =
 			if option is null
 				el.append "<option value='#{item.value}' #{selected}>#{item.text}</option>"
 			else
-				option.text(item.text) if option.text is not item.text
+				option.text(item.text) if option.text isnt item.text
+				option.val(item.value) if option.value isnt item.value
 				if option.attr("selected") is "selected" or option.attr("selected") is true
 					option.removeAttr("selected") if selected.length is 0
 				else

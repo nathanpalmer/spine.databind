@@ -135,8 +135,11 @@
         if (option === null) {
           el.append("<option value='" + item.value + "' " + selected + ">" + item.text + "</option>");
         } else {
-          if (option.text === !item.text) {
+          if (option.text !== item.text) {
             option.text(item.text);
+          }
+          if (option.value !== item.value) {
+            option.val(item.value);
           }
           if (option.attr("selected") === "selected" || option.attr("selected") === true) {
             if (selected.length === 0) {
