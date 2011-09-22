@@ -24,13 +24,14 @@ Update =
 						model.updateAttribute(operator.property, e.val())
 					else
 						model.updateAttribute(operator.property, e.text())
+			@
+		@
 
 	update: (operators,model,el) ->
 		el.each () ->
 			e = $(@)
 			for operator in operators
-				value = DataBind.eval(model,operator.property)
-				#console.log "Update #{@tagName} #{operator.property} #{value}"
+				value = DataBind.get(model,operator.property)
 				switch @tagName
 					when "INPUT", "TEXTAREA"
 						e.val(value)
@@ -39,8 +40,12 @@ Update =
 					else
 						if typeof value is "object" and value.constructor is Array
 							e.text(value.join(","))
+						else if typeof value is "object"
+							e.text(value.toString())
 						else
 							e.text(value)
+			@
+		@
 
 Options = 
 	keys: [ "options", "selectedOptions" ]
@@ -58,16 +63,16 @@ Options =
 	update: (operators,model,el) ->
 		ops = operators.filter((e) -> e.name is "options")[0]
 		opsSelected = operators.filter((e) -> e.name is "selectedOptions")
-		selectedOptions = if opsSelected.length is 1 then DataBind.eval(model,opsSelected[0].property) else [] 
+		selectedOptions = if opsSelected.length is 1 then DataBind.get(model,opsSelected[0].property) else [] 
 		selectedOptions = [selectedOptions] if not (selectedOptions instanceof Array)
 			
-		array = DataBind.eval(model,ops.property)
+		array = DataBind.get(model,ops.property)
 		options = el.children('option')
 
 		if array instanceof Array
 			result = ({ text: item, value: item} for item in array)
 		else
-			result = ({ text: array[key], value: key } for key of array)				
+			result = ({ text: value, value: key } for own key, value of array)				
 
 		for item,index in result
 			option = if options.length > index then $(options[index]) else null
@@ -114,7 +119,7 @@ Click =
 
 	click: (operators,model,el) ->
 		for operator in operators
-			DataBind.eval(model,operator.property)
+			DataBind.get(model,operator.property)
 
 Enable = 
 	keys: [ "enable" ]
@@ -128,7 +133,7 @@ Enable =
 
 	update: (operators,model,el) ->
 		operator = operators.filter((e) -> e.name is "enable")[0]
-		result = DataBind.eval(model,operator.property)
+		result = DataBind.get(model,operator.property)
 
 		if result
 			el.removeAttr("disabled")
@@ -147,7 +152,7 @@ Visible =
 
 	update: (operators,model,el) ->
 		operator = operators.filter((e) -> e.name is "visible")[0]
-		result = DataBind.eval(model,operator.property)
+		result = DataBind.get(model,operator.property)
 
 		if result
 			el.show()
@@ -166,9 +171,10 @@ Attribute =
 	update: (operators,model,el) ->
 		operator = operators.filter((e) -> e.name is "attr")[0]
 		json = JSON.parse(operator.property)
-		for property of json
-			value = DataBind.eval(model,json[property])
+		for own property of json
+			value = DataBind.get(model,json[property])
 			el.attr(property,value)
+		@
 
 Checked = 
 	keys: [ "checked" ]
@@ -192,7 +198,7 @@ Checked =
 
 	update: (operators,model,el) ->
 		operator = operators.filter((e) -> e.name is "checked")[0]
-		result = DataBind.eval(model,operator.property)
+		result = DataBind.get(model,operator.property)
 		value = el.val()
 
 		if el.attr("type") is "radio"
@@ -213,7 +219,7 @@ DataBind =
 		@trigger "destroy-bindings"
 
 		controller = this
-		splitter = /(\w+)(\[.*])? (.*)/
+		splitter = /(\w+)(\\[.*])? (.*)/
 
 		findBinder = (key) ->
 			for binder in controller.binders
@@ -245,9 +251,14 @@ DataBind =
 
 		parse = (key) ->
 			match = key.match(splitter)
-			name = match[1]
-			parameters = match[2]
-			selector = match[3]
+			
+			if match isnt null
+				name = match[1]
+				parameters = match[2]
+				selector = match[3]
+			else
+				name = key
+				selector = ""
 
 			if selector is ""
 				selector = controller.el
@@ -276,9 +287,10 @@ DataBind =
 		elements = []
 
 		for key of @bindings
-			property = @bindings[key]
-			info = parse(key)
-			addElement(elements,info,property)
+			if @bindings.hasOwnProperty(key)
+				property = @bindings[key]
+				info = parse(key)
+				addElement(elements,info,property)
 		
 		@el.find("*[data-bind]").each () ->
 			e = $(this)
@@ -304,10 +316,11 @@ DataBind =
 
 		@
 
-	eval: (item,value) ->
-		switch typeof item[value]
-			when "function" then result = item[value]()
-			else result = item[value]
+	get: (item,value) ->
+		if typeof item[value] is "function"
+			result = item[value]()
+		else
+			result = item[value]
 		result 
 
 @Spine.DataBind = DataBind
