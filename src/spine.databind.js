@@ -60,6 +60,8 @@
               default:
                 if (typeof value === "object" && value.constructor === Array) {
                   return e.text(value.join(","));
+                } else if (typeof value === "object") {
+                  return e.text(value.toString());
                 } else {
                   return e.text(value);
                 }
@@ -368,9 +370,14 @@
       parse = function(key) {
         var match, name, parameters, selector;
         match = key.match(splitter);
-        name = match[1];
-        parameters = match[2];
-        selector = match[3];
+        if (match !== null) {
+          name = match[1];
+          parameters = match[2];
+          selector = match[3];
+        } else {
+          name = key;
+          selector = "";
+        }
         if (selector === "") {
           selector = controller.el;
         } else {

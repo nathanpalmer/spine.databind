@@ -39,6 +39,8 @@ Update =
 					else
 						if typeof value is "object" and value.constructor is Array
 							e.text(value.join(","))
+						else if typeof value is "object"
+							e.text(value.toString())
 						else
 							e.text(value)
 
@@ -245,9 +247,14 @@ DataBind =
 
 		parse = (key) ->
 			match = key.match(splitter)
-			name = match[1]
-			parameters = match[2]
-			selector = match[3]
+
+			if match isnt null
+				name = match[1]
+				parameters = match[2]
+				selector = match[3]
+			else
+				name = key
+				selector = ""
 
 			if selector is ""
 				selector = controller.el
