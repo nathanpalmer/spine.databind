@@ -1,0 +1,7 @@
+{
+	"source":"src",
+	"output":"build",
+	"lint": {},
+    "uglify": {},
+    "extensions": { "uglify": "min" }
+}
