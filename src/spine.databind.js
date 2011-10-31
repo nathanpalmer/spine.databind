@@ -1,27 +1,58 @@
 (function() {
   var Attribute, Checked, Click, DataBind, Enable, Options, Template, Update, Visible;
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; }, __hasProp = Object.prototype.hasOwnProperty;
-  Template = {
-    keys: [],
-    bind: function(operators, model, el) {},
-    unbind: function(operators, model, el) {}
-  };
-  Update = {
-    keys: ["text", "value"],
-    bind: function(operators, model, el) {
+  var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
+    for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
+    function ctor() { this.constructor = child; }
+    ctor.prototype = parent.prototype;
+    child.prototype = new ctor;
+    child.__super__ = parent.prototype;
+    return child;
+  }, __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+  Template = (function() {
+    function Template() {}
+    Template.prototype.keys = [];
+    Template.prototype.bind = function(operators, model, el, options) {};
+    Template.prototype.unbind = function(operators, model, el, options) {};
+    Template.prototype.get = function(item, value) {
+      var result;
+      if (typeof item[value] === "function") {
+        result = item[value]();
+      } else {
+        result = item[value];
+      }
+      return result;
+    };
+    Template.prototype.set = function(model, property, value, options) {
+      if (!options || options.save) {
+        return model.updateAttribute(property, value);
+      } else {
+        return model[property] = value;
+      }
+    };
+    return Template;
+  })();
+  Update = (function() {
+    __extends(Update, Template);
+    function Update() {
+      Update.__super__.constructor.apply(this, arguments);
+    }
+    Update.prototype.keys = ["text", "value"];
+    Update.prototype.bind = function(operators, model, el, options) {
       el.bind("change", __bind(function() {
-        return this.change(operators, model, el);
+        return this.change(operators, model, el, options);
       }, this));
       model.bind("change", __bind(function() {
-        return this.update(operators, model, el);
+        return this.update(operators, model, el, options);
       }, this));
-      return this.update(operators, model, el);
-    },
-    unbind: function(operators, model, el) {
+      return this.update(operators, model, el, options);
+    };
+    Update.prototype.unbind = function(operators, model, el, options) {
       el.unbind("change");
       return model.unbind("change");
-    },
-    change: function(operators, model, el) {
+    };
+    Update.prototype.change = function(operators, model, el, options) {
+      var binder;
+      binder = this;
       el.each(function() {
         var e, operator, _i, _len;
         e = $(this);
@@ -31,23 +62,25 @@
             case "INPUT":
             case "SELECT":
             case "TEXTAREA":
-              model.updateAttribute(operator.property, e.val());
+              binder.set(model, operator.property, e.val());
               break;
             default:
-              model.updateAttribute(operator.property, e.text());
+              binder.set(model, operator.property, e.text());
           }
         }
         return this;
       });
       return this;
-    },
-    update: function(operators, model, el) {
+    };
+    Update.prototype.update = function(operators, model, el, options) {
+      var binder;
+      binder = this;
       el.each(function() {
         var e, operator, value, _i, _len;
         e = $(this);
         for (_i = 0, _len = operators.length; _i < _len; _i++) {
           operator = operators[_i];
-          value = DataBind.get(model, operator.property);
+          value = binder.get(model, operator.property);
           switch (this.tagName) {
             case "INPUT":
             case "TEXTAREA":
@@ -69,39 +102,44 @@
         return this;
       });
       return this;
+    };
+    return Update;
+  })();
+  Options = (function() {
+    __extends(Options, Template);
+    function Options() {
+      Options.__super__.constructor.apply(this, arguments);
     }
-  };
-  Options = {
-    keys: ["options", "selectedOptions"],
-    bind: function(operators, model, el) {
+    Options.prototype.keys = ["options", "selectedOptions"];
+    Options.prototype.bind = function(operators, model, el, options) {
       model.bind("update", __bind(function() {
-        return this.update(operators, model, el);
+        return this.update(operators, model, el, options);
       }, this));
-      this.update(operators, model, el);
+      this.update(operators, model, el, options);
       if (operators.some(function(e) {
         return e.name === "selectedOptions";
       })) {
         return el.bind("change", __bind(function() {
-          return this.change(operators, model, el);
+          return this.change(operators, model, el, options);
         }, this));
       }
-    },
-    unbind: function(operators, model, el) {
+    };
+    Options.prototype.unbind = function(operators, model, el, options) {
       return model.unbind("update");
-    },
-    update: function(operators, model, el) {
-      var array, index, item, key, ops, opsSelected, option, options, result, selected, selectedOptions, value, _len, _ref, _ref2, _results;
+    };
+    Options.prototype.update = function(operators, model, el, options) {
+      var array, index, item, key, ops, opsSelected, option, result, selected, selectedOptions, value, _len, _ref, _ref2, _results;
       ops = operators.filter(function(e) {
         return e.name === "options";
       })[0];
       opsSelected = operators.filter(function(e) {
         return e.name === "selectedOptions";
       });
-      selectedOptions = opsSelected.length === 1 ? DataBind.get(model, opsSelected[0].property) : [];
+      selectedOptions = opsSelected.length === 1 ? this.get(model, opsSelected[0].property) : [];
       if (!(selectedOptions instanceof Array)) {
         selectedOptions = [selectedOptions];
       }
-      array = DataBind.get(model, ops.property);
+      array = this.get(model, ops.property);
       options = el.children('option');
       if (array instanceof Array) {
         result = (function() {
@@ -162,8 +200,8 @@
         }
         return _results;
       }
-    },
-    change: function(operators, model, el) {
+    };
+    Options.prototype.change = function(operators, model, el, options) {
       var items, operator;
       operator = operators.filter(function(e) {
         return e.name === "selectedOptions";
@@ -180,135 +218,164 @@
           model[operator.property] = items[0];
         }
       }
-      return model.save();
+      if (!options || options.save) {
+        return model.save();
+      }
+    };
+    return Options;
+  })();
+  Click = (function() {
+    __extends(Click, Template);
+    function Click() {
+      Click.__super__.constructor.apply(this, arguments);
     }
-  };
-  Click = {
-    keys: ["click"],
-    bind: function(operators, model, el) {
+    Click.prototype.keys = ["click"];
+    Click.prototype.bind = function(operators, model, el, options) {
       return el.bind("click", __bind(function() {
-        return this.click(operators, model, el);
+        return this.click(operators, model, el, options);
       }, this));
-    },
-    unbind: function(operators, model, el) {
+    };
+    Click.prototype.unbind = function(operators, model, el, options) {
       return el.unbind("click");
-    },
-    click: function(operators, model, el) {
-      var operator, _i, _len, _results;
+    };
+    Click.prototype.click = function(operators, model, el, options) {
+      var binder, operator, _i, _len, _results;
+      binder = this;
       _results = [];
       for (_i = 0, _len = operators.length; _i < _len; _i++) {
         operator = operators[_i];
-        _results.push(DataBind.get(model, operator.property));
+        _results.push(binder.get(model, operator.property));
       }
       return _results;
+    };
+    return Click;
+  })();
+  Enable = (function() {
+    __extends(Enable, Template);
+    function Enable() {
+      Enable.__super__.constructor.apply(this, arguments);
     }
-  };
-  Enable = {
-    keys: ["enable"],
-    bind: function(operators, model, el) {
+    Enable.prototype.keys = ["enable"];
+    Enable.prototype.bind = function(operators, model, el, options) {
       model.bind("update", __bind(function() {
-        return this.update(operators, model, el);
+        return this.update(operators, model, el, options);
       }, this));
-      return this.update(operators, model, el);
-    },
-    unbind: function(operators, model, el) {
+      return this.update(operators, model, el, options);
+    };
+    Enable.prototype.unbind = function(operators, model, el, options) {
       return model.unbind("update");
-    },
-    update: function(operators, model, el) {
+    };
+    Enable.prototype.update = function(operators, model, el, options) {
       var operator, result;
       operator = operators.filter(function(e) {
         return e.name === "enable";
       })[0];
-      result = DataBind.get(model, operator.property);
+      result = this.get(model, operator.property);
       if (result) {
         return el.removeAttr("disabled");
       } else {
         return el.attr("disabled", "disabled");
       }
+    };
+    return Enable;
+  })();
+  Visible = (function() {
+    __extends(Visible, Template);
+    function Visible() {
+      Visible.__super__.constructor.apply(this, arguments);
     }
-  };
-  Visible = {
-    keys: ["visible"],
-    bind: function(operators, model, el) {
+    Visible.prototype.keys = ["visible"];
+    Visible.prototype.bind = function(operators, model, el, options) {
       model.bind("update", __bind(function() {
-        return this.update(operators, model, el);
+        return this.update(operators, model, el, options);
       }, this));
-      return this.update(operators, model, el);
-    },
-    unbind: function(operators, model, el) {
+      return this.update(operators, model, el, options);
+    };
+    Visible.prototype.unbind = function(operators, model, el, options) {
       return model.unbind("update");
-    },
-    update: function(operators, model, el) {
+    };
+    Visible.prototype.update = function(operators, model, el, options) {
       var operator, result;
       operator = operators.filter(function(e) {
         return e.name === "visible";
       })[0];
-      result = DataBind.get(model, operator.property);
+      result = this.get(model, operator.property);
       if (result) {
         return el.show();
       } else {
         return el.hide();
       }
+    };
+    return Visible;
+  })();
+  Attribute = (function() {
+    __extends(Attribute, Template);
+    function Attribute() {
+      Attribute.__super__.constructor.apply(this, arguments);
     }
-  };
-  Attribute = {
-    keys: ["attr"],
-    bind: function(operators, model, el) {
+    Attribute.prototype.keys = ["attr"];
+    Attribute.prototype.bind = function(operators, model, el, options) {
       model.bind("update", __bind(function() {
-        return this.update(operators, model, el);
+        return this.update(operators, model, el, options);
       }, this));
-      return this.update(operators, model, el);
-    },
-    unbind: function(operators, model, el) {
+      return this.update(operators, model, el, options);
+    };
+    Attribute.prototype.unbind = function(operators, model, el, options) {
       return model.unbind("update");
-    },
-    update: function(operators, model, el) {
-      var json, operator, property, value;
+    };
+    Attribute.prototype.update = function(operators, model, el, options) {
+      var binder, json, operator, property, value;
+      binder = this;
       operator = operators.filter(function(e) {
         return e.name === "attr";
       })[0];
       json = JSON.parse(operator.property);
       for (property in json) {
         if (!__hasProp.call(json, property)) continue;
-        value = DataBind.get(model, json[property]);
+        value = binder.get(model, json[property]);
         el.attr(property, value);
       }
       return this;
+    };
+    return Attribute;
+  })();
+  Checked = (function() {
+    __extends(Checked, Template);
+    function Checked() {
+      Checked.__super__.constructor.apply(this, arguments);
     }
-  };
-  Checked = {
-    keys: ["checked"],
-    bind: function(operators, model, el) {
+    Checked.prototype.keys = ["checked"];
+    Checked.prototype.bind = function(operators, model, el, options) {
       el.bind("change", __bind(function() {
-        return this.change(operators, model, el);
+        return this.change(operators, model, el, options);
       }, this));
       model.bind("change", __bind(function() {
-        return this.update(operators, model, el);
+        return this.update(operators, model, el, options);
       }, this));
-      return this.update(operators, model, el);
-    },
-    unbind: function(operators, model, el) {
+      return this.update(operators, model, el, options);
+    };
+    Checked.prototype.unbind = function(operators, model, el, options) {
       el.unbind("change");
       return model.unbind("change");
-    },
-    change: function(operators, model, el) {
+    };
+    Checked.prototype.change = function(operators, model, el, options) {
       var operator, value;
       operator = operators.filter(function(e) {
         return e.name === "checked";
       })[0];
       if (el.attr("type") === "radio") {
-        return model.updateAttribute(operator.property, el.val());
+        return this.set(model, operator.property, el.val(), options);
       } else {
         value = el.is(":checked");
-        return model.updateAttribute(operator.property, value);
+        return this.set(model, operator.property, value, options);
       }
-    },
-    update: function(operators, model, el) {
+    };
+    Checked.prototype.update = function(operators, model, el, options) {
       var operator, result, value;
       operator = operators.filter(function(e) {
         return e.name === "checked";
       })[0];
-      result = DataBind.get(model, operator.property);
+      result = this.get(model, operator.property);
       value = el.val();
       if (el.attr("type") === "radio") {
         if (result === value) {
@@ -323,15 +390,20 @@
           return el.attr("checked", "checked");
         }
       }
-    }
-  };
+    };
+    return Checked;
+  })();
   DataBind = {
-    binders: [Update, Options, Click, Enable, Visible, Attribute, Checked],
+    binders: [new Update(), new Options(), new Click(), new Enable(), new Visible(), new Attribute(), new Checked()],
     refreshBindings: function(model) {
-      var addElement, controller, element, elements, findBinder, info, init, key, parse, property, splitter, trim, _i, _len;
+      var addElement, controller, element, elements, findBinder, info, init, key, options, parse, property, splitter, trim, _i, _len;
       this.trigger("destroy-bindings");
       controller = this;
       splitter = /(\w+)(\\[.*])? (.*)/;
+      options = {
+        save: true
+      };
+      $.extend(options, controller.bindingOptions);
       findBinder = function(key) {
         var binder, _i, _len, _ref;
         _ref = controller.binders;
@@ -394,12 +466,12 @@
         var el, operators;
         operators = element.operators;
         el = element.el;
-        element.binder.bind(operators, model, el);
+        element.binder.bind(operators, model, el, options);
         controller.bind("destroy", function() {
-          return element.binder.unbind(operators, model, el);
+          return element.binder.unbind(operators, model, el, options);
         });
         return controller.bind("destroy-bindings", function() {
-          return element.binder.unbind(operators, model, el);
+          return element.binder.unbind(operators, model, el, options);
         });
       };
       trim = function(s) {
@@ -442,15 +514,6 @@
         init(element);
       }
       return this;
-    },
-    get: function(item, value) {
-      var result;
-      if (typeof item[value] === "function") {
-        result = item[value]();
-      } else {
-        result = item[value];
-      }
-      return result;
     }
   };
   this.Spine.DataBind = DataBind;

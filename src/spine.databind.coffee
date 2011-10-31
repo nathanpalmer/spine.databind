@@ -1,37 +1,53 @@
-Template = 
+class Template
 	keys: [ ]
-	bind: (operators,model,el) ->
-	unbind: (operators,model,el) ->
+	bind: (operators,model,el,options) ->
+	unbind: (operators,model,el,options) ->
 
-Update =
+	get: (item,value) ->
+		if typeof item[value] is "function"
+			result = item[value]()
+		else
+			result = item[value]
+		result
+
+	set: (model,property,value,options) ->
+		if !options or options.save
+			model.updateAttribute(property,value)
+		else
+			model[property] = value
+
+
+class Update extends Template
 	keys: [ "text", "value" ]
 
-	bind: (operators,model,el) ->
-		el.bind("change", => @change(operators,model,el))
-		model.bind("change", => @update(operators,model,el))
-		@update(operators,model,el)
+	bind: (operators,model,el,options) ->
+		el.bind("change", => @change(operators,model,el,options))
+		model.bind("change", => @update(operators,model,el,options))
+		@update(operators,model,el,options)
 
-	unbind: (operators,model,el) ->
+	unbind: (operators,model,el,options) ->
 		el.unbind("change")
 		model.unbind("change")
 
-	change: (operators,model,el) ->
+	change: (operators,model,el,options) ->
+		binder = @
 		el.each () ->
 			e = $(@)
 			for operator in operators
 				switch @tagName
 					when "INPUT", "SELECT", "TEXTAREA"
-						model.updateAttribute(operator.property, e.val())
+						binder.set(model,operator.property,e.val())
 					else
-						model.updateAttribute(operator.property, e.text())
+						binder.set(model,operator.property,e.text())
 			@
 		@
 
-	update: (operators,model,el) ->
+	update: (operators,model,el,options) ->
+		binder = @
 		el.each () ->
 			e = $(@)
 			for operator in operators
-				value = DataBind.get(model,operator.property)
+				value = binder.get(model,operator.property)
 				switch @tagName
 					when "INPUT", "TEXTAREA"
 						e.val(value)
@@ -47,26 +63,26 @@ Update =
 			@
 		@
 
-Options = 
+class Options extends Template
 	keys: [ "options", "selectedOptions" ]
 
-	bind: (operators,model,el) ->
-		model.bind("update", => @update(operators,model,el))
-		@update(operators,model,el)
+	bind: (operators,model,el,options) ->
+		model.bind("update", => @update(operators,model,el,options))
+		@update(operators,model,el,options)
 
 		if operators.some((e) -> e.name is "selectedOptions")
-			el.bind("change", => @change(operators,model,el))
+			el.bind("change", => @change(operators,model,el,options))
 
-	unbind: (operators,model,el) ->
+	unbind: (operators,model,el,options) ->
 		model.unbind("update")
 
-	update: (operators,model,el) ->
+	update: (operators,model,el,options) ->
 		ops = operators.filter((e) -> e.name is "options")[0]
 		opsSelected = operators.filter((e) -> e.name is "selectedOptions")
-		selectedOptions = if opsSelected.length is 1 then DataBind.get(model,opsSelected[0].property) else [] 
+		selectedOptions = if opsSelected.length is 1 then @get(model,opsSelected[0].property) else [] 
 		selectedOptions = [selectedOptions] if not (selectedOptions instanceof Array)
 			
-		array = DataBind.get(model,ops.property)
+		array = @get(model,ops.property)
 		options = el.children('option')
 
 		if array instanceof Array
@@ -92,7 +108,7 @@ Options =
 			for index in [array.length..options.length]
 				$(options[index]).remove()
 
-	change: (operators,model,el) ->
+	change: (operators,model,el,options) ->
 		operator = operators.filter((e) -> e.name is "selectedOptions")[0]
 		
 		items = []
@@ -107,98 +123,103 @@ Options =
 			if items.length is 1
 				model[operator.property] = items[0]
 
-		model.save()
+		if !options || options.save
+			model.save()
 
-Click = 
+class Click extends Template
 	keys: [ "click" ]
-	bind: (operators,model,el) ->
-		el.bind("click", => @click(operators,model,el))
 
-	unbind: (operators,model,el) ->
+	bind: (operators,model,el,options) ->
+		el.bind("click", => @click(operators,model,el,options))
+
+	unbind: (operators,model,el,options) ->
 		el.unbind("click")
 
-	click: (operators,model,el) ->
+	click: (operators,model,el,options) ->
+		binder = @
 		for operator in operators
-			DataBind.get(model,operator.property)
+			binder.get(model,operator.property)
 
-Enable = 
+class Enable extends Template
 	keys: [ "enable" ]
 
-	bind: (operators,model,el) ->
-		model.bind("update", => @update(operators,model,el))
-		@update(operators,model,el)
+	bind: (operators,model,el,options) ->
+		model.bind("update", => @update(operators,model,el,options))
+		@update(operators,model,el,options)
 
-	unbind: (operators,model,el) ->
+	unbind: (operators,model,el,options) ->
 		model.unbind("update")
 
-	update: (operators,model,el) ->
+	update: (operators,model,el,options) ->
 		operator = operators.filter((e) -> e.name is "enable")[0]
-		result = DataBind.get(model,operator.property)
+		result = @get(model,operator.property)
 
 		if result
 			el.removeAttr("disabled")
 		else
 			el.attr("disabled","disabled")
 
-Visible = 
+class Visible extends Template
 	keys: [ "visible" ]
 
-	bind: (operators,model,el) ->
-		model.bind("update", => @update(operators,model,el))
-		@update(operators,model,el)
+	bind: (operators,model,el,options) ->
+		model.bind("update", => @update(operators,model,el,options))
+		@update(operators,model,el,options)
 
-	unbind: (operators,model,el) ->
+	unbind: (operators,model,el,options) ->
 		model.unbind("update")
 
-	update: (operators,model,el) ->
+	update: (operators,model,el,options) ->
 		operator = operators.filter((e) -> e.name is "visible")[0]
-		result = DataBind.get(model,operator.property)
+		result = @get(model,operator.property)
 
 		if result
 			el.show()
 		else
 			el.hide()
 
-Attribute = 
+class Attribute extends Template
 	keys: [ "attr" ]
-	bind: (operators,model,el) ->
-		model.bind("update", => @update(operators,model,el))
-		@update(operators,model,el)
 
-	unbind: (operators,model,el) ->
+	bind: (operators,model,el,options) ->
+		model.bind("update", => @update(operators,model,el,options))
+		@update(operators,model,el,options)
+
+	unbind: (operators,model,el,options) ->
 		model.unbind("update")
 
-	update: (operators,model,el) ->
+	update: (operators,model,el,options) ->
+		binder = @
 		operator = operators.filter((e) -> e.name is "attr")[0]
 		json = JSON.parse(operator.property)
 		for own property of json
-			value = DataBind.get(model,json[property])
+			value = binder.get(model,json[property])
 			el.attr(property,value)
 		@
 
-Checked = 
+class Checked extends Template
 	keys: [ "checked" ]
 
-	bind: (operators,model,el) ->
-		el.bind("change", => @change(operators,model,el))
-		model.bind("change", => @update(operators,model,el))
-		@update(operators,model,el)
+	bind: (operators,model,el,options) ->
+		el.bind("change", => @change(operators,model,el,options))
+		model.bind("change", => @update(operators,model,el,options))
+		@update(operators,model,el,options)
 
-	unbind: (operators,model,el) ->
+	unbind: (operators,model,el,options) ->
 		el.unbind("change")
 		model.unbind("change")
 
-	change: (operators,model,el) ->
+	change: (operators,model,el,options) ->
 		operator = operators.filter((e) -> e.name is "checked")[0]
 		if el.attr("type") is "radio"
-			model.updateAttribute(operator.property, el.val())
+			@set(model,operator.property,el.val(),options)
 		else
 			value = el.is(":checked")
-			model.updateAttribute(operator.property, value)
+			@set(model,operator.property,value,options)
 
-	update: (operators,model,el) ->
+	update: (operators,model,el,options) ->
 		operator = operators.filter((e) -> e.name is "checked")[0]
-		result = DataBind.get(model,operator.property)
+		result = @get(model,operator.property)
 		value = el.val()
 
 		if el.attr("type") is "radio"
@@ -213,13 +234,25 @@ Checked =
 				el.attr("checked", "checked")
 	
 DataBind =
-	binders: [ Update, Options, Click, Enable, Visible, Attribute, Checked ]
+	binders: [ 
+		new Update()
+		new Options()
+		new Click()
+		new Enable()
+		new Visible()
+		new Attribute()
+		new Checked()
+	]
 
 	refreshBindings: (model) ->
 		@trigger "destroy-bindings"
 
 		controller = this
 		splitter = /(\w+)(\\[.*])? (.*)/
+
+		options = 
+			save: true
+		$.extend(options, controller.bindingOptions)
 
 		findBinder = (key) ->
 			for binder in controller.binders
@@ -274,11 +307,11 @@ DataBind =
 			operators = element.operators
 			el = element.el
 
-			element.binder.bind(operators,model,el)
+			element.binder.bind(operators,model,el,options)
 			controller.bind "destroy", ->
-				element.binder.unbind(operators,model,el)
+				element.binder.unbind(operators,model,el,options)
 			controller.bind "destroy-bindings", ->
-				element.binder.unbind(operators,model,el)
+				element.binder.unbind(operators,model,el,options)
 
 		trim = (s) ->
 			s.replace(/^\s+|\s+$/g,"")
@@ -314,12 +347,5 @@ DataBind =
 			init(element)
 
 		@
-
-	get: (item,value) ->
-		if typeof item[value] is "function"
-			result = item[value]()
-		else
-			result = item[value]
-		result 
 
 @Spine.DataBind = DataBind
