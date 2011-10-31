@@ -193,7 +193,7 @@ Checked =
 		if el.attr("type") is "radio"
 			model.updateAttribute(operator.property, el.val())
 		else
-			value = el.attr("checked") is "checked" or el.attr("checked") is true
+			value = el.is(":checked")
 			model.updateAttribute(operator.property, value)
 
 	update: (operators,model,el) ->

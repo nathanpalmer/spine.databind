@@ -1,6 +1,6 @@
 (function() {
   var Attribute, Checked, Click, DataBind, Enable, Options, Template, Update, Visible;
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; }, __hasProp = Object.prototype.hasOwnProperty;
   Template = {
     keys: [],
     bind: function(operators, model, el) {},
@@ -22,54 +22,53 @@
       return model.unbind("change");
     },
     change: function(operators, model, el) {
-      return el.each(function() {
-        var e, operator, _i, _len, _results;
+      el.each(function() {
+        var e, operator, _i, _len;
         e = $(this);
-        _results = [];
         for (_i = 0, _len = operators.length; _i < _len; _i++) {
           operator = operators[_i];
-          _results.push((function() {
-            switch (this.tagName) {
-              case "INPUT":
-              case "SELECT":
-              case "TEXTAREA":
-                return model.updateAttribute(operator.property, e.val());
-              default:
-                return model.updateAttribute(operator.property, e.text());
-            }
-          }).call(this));
+          switch (this.tagName) {
+            case "INPUT":
+            case "SELECT":
+            case "TEXTAREA":
+              model.updateAttribute(operator.property, e.val());
+              break;
+            default:
+              model.updateAttribute(operator.property, e.text());
+          }
         }
-        return _results;
+        return this;
       });
+      return this;
     },
     update: function(operators, model, el) {
-      return el.each(function() {
-        var e, operator, value, _i, _len, _results;
+      el.each(function() {
+        var e, operator, value, _i, _len;
         e = $(this);
-        _results = [];
         for (_i = 0, _len = operators.length; _i < _len; _i++) {
           operator = operators[_i];
-          value = DataBind.eval(model, operator.property);
-          _results.push((function() {
-            switch (this.tagName) {
-              case "INPUT":
-              case "TEXTAREA":
-                return e.val(value);
-              case "SELECT":
-                return e.find("option[value=" + value + "]").attr("selected", "selected");
-              default:
-                if (typeof value === "object" && value.constructor === Array) {
-                  return e.text(value.join(","));
-                } else if (typeof value === "object") {
-                  return e.text(value.toString());
-                } else {
-                  return e.text(value);
-                }
-            }
-          }).call(this));
+          value = DataBind.get(model, operator.property);
+          switch (this.tagName) {
+            case "INPUT":
+            case "TEXTAREA":
+              e.val(value);
+              break;
+            case "SELECT":
+              e.find("option[value=" + value + "]").attr("selected", "selected");
+              break;
+            default:
+              if (typeof value === "object" && value.constructor === Array) {
+                e.text(value.join(","));
+              } else if (typeof value === "object") {
+                e.text(value.toString());
+              } else {
+                e.text(value);
+              }
+          }
         }
-        return _results;
+        return this;
       });
+      return this;
     }
   };
   Options = {
@@ -91,18 +90,18 @@
       return model.unbind("update");
     },
     update: function(operators, model, el) {
-      var array, index, item, key, ops, opsSelected, option, options, result, selected, selectedOptions, _len, _ref, _ref2, _results;
+      var array, index, item, key, ops, opsSelected, option, options, result, selected, selectedOptions, value, _len, _ref, _ref2, _results;
       ops = operators.filter(function(e) {
         return e.name === "options";
       })[0];
       opsSelected = operators.filter(function(e) {
         return e.name === "selectedOptions";
       });
-      selectedOptions = opsSelected.length === 1 ? DataBind.eval(model, opsSelected[0].property) : [];
+      selectedOptions = opsSelected.length === 1 ? DataBind.get(model, opsSelected[0].property) : [];
       if (!(selectedOptions instanceof Array)) {
         selectedOptions = [selectedOptions];
       }
-      array = DataBind.eval(model, ops.property);
+      array = DataBind.get(model, ops.property);
       options = el.children('option');
       if (array instanceof Array) {
         result = (function() {
@@ -122,8 +121,10 @@
           var _results;
           _results = [];
           for (key in array) {
+            if (!__hasProp.call(array, key)) continue;
+            value = array[key];
             _results.push({
-              text: array[key],
+              text: value,
               value: key
             });
           }
@@ -197,7 +198,7 @@
       _results = [];
       for (_i = 0, _len = operators.length; _i < _len; _i++) {
         operator = operators[_i];
-        _results.push(DataBind.eval(model, operator.property));
+        _results.push(DataBind.get(model, operator.property));
       }
       return _results;
     }
@@ -218,7 +219,7 @@
       operator = operators.filter(function(e) {
         return e.name === "enable";
       })[0];
-      result = DataBind.eval(model, operator.property);
+      result = DataBind.get(model, operator.property);
       if (result) {
         return el.removeAttr("disabled");
       } else {
@@ -242,7 +243,7 @@
       operator = operators.filter(function(e) {
         return e.name === "visible";
       })[0];
-      result = DataBind.eval(model, operator.property);
+      result = DataBind.get(model, operator.property);
       if (result) {
         return el.show();
       } else {
@@ -262,17 +263,17 @@
       return model.unbind("update");
     },
     update: function(operators, model, el) {
-      var json, operator, property, value, _results;
+      var json, operator, property, value;
       operator = operators.filter(function(e) {
         return e.name === "attr";
       })[0];
       json = JSON.parse(operator.property);
-      _results = [];
       for (property in json) {
-        value = DataBind.eval(model, json[property]);
-        _results.push(el.attr(property, value));
+        if (!__hasProp.call(json, property)) continue;
+        value = DataBind.get(model, json[property]);
+        el.attr(property, value);
       }
-      return _results;
+      return this;
     }
   };
   Checked = {
@@ -298,7 +299,7 @@
       if (el.attr("type") === "radio") {
         return model.updateAttribute(operator.property, el.val());
       } else {
-        value = el.attr("checked") === "checked" || el.attr("checked") === true;
+        value = el.is(":checked");
         return model.updateAttribute(operator.property, value);
       }
     },
@@ -307,7 +308,7 @@
       operator = operators.filter(function(e) {
         return e.name === "checked";
       })[0];
-      result = DataBind.eval(model, operator.property);
+      result = DataBind.get(model, operator.property);
       value = el.val();
       if (el.attr("type") === "radio") {
         if (result === value) {
@@ -330,7 +331,7 @@
       var addElement, controller, element, elements, findBinder, info, init, key, parse, property, splitter, trim, _i, _len;
       this.trigger("destroy-bindings");
       controller = this;
-      splitter = /(\w+)(\[.*])? (.*)/;
+      splitter = /(\w+)(\\[.*])? (.*)/;
       findBinder = function(key) {
         var binder, _i, _len, _ref;
         _ref = controller.binders;
@@ -406,9 +407,11 @@
       };
       elements = [];
       for (key in this.bindings) {
-        property = this.bindings[key];
-        info = parse(key);
-        addElement(elements, info, property);
+        if (this.bindings.hasOwnProperty(key)) {
+          property = this.bindings[key];
+          info = parse(key);
+          addElement(elements, info, property);
+        }
       }
       this.el.find("*[data-bind]").each(function() {
         var attributes, binder, databind, e, info, _i, _len, _results;
@@ -440,14 +443,12 @@
       }
       return this;
     },
-    eval: function(item, value) {
+    get: function(item, value) {
       var result;
-      switch (typeof item[value]) {
-        case "function":
-          result = item[value]();
-          break;
-        default:
-          result = item[value];
+      if (typeof item[value] === "function") {
+        result = item[value]();
+      } else {
+        result = item[value];
       }
       return result;
     }
