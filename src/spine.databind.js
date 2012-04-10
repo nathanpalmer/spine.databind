@@ -1,18 +1,18 @@
 (function() {
-  var Attribute, Checked, Click, DataBind, Enable, Options, Template, Update, Visible;
-  var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
-    for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
-    function ctor() { this.constructor = child; }
-    ctor.prototype = parent.prototype;
-    child.prototype = new ctor;
-    child.__super__ = parent.prototype;
-    return child;
-  }, __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+  var Attribute, Checked, Click, DataBind, Enable, Options, Template, Update, Visible,
+    __hasProp = Object.prototype.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
+
   Template = (function() {
+
     function Template() {}
+
     Template.prototype.keys = [];
+
     Template.prototype.bind = function(operators, model, el, options) {};
+
     Template.prototype.unbind = function(operators, model, el, options) {};
+
     Template.prototype.get = function(item, value) {
       var result;
       if (typeof item[value] === "function") {
@@ -22,6 +22,7 @@
       }
       return result;
     };
+
     Template.prototype.set = function(model, property, value, options) {
       if (!options || options.save) {
         return model.updateAttribute(property, value);
@@ -29,27 +30,37 @@
         return model[property] = value;
       }
     };
+
     return Template;
+
   })();
-  Update = (function() {
-    __extends(Update, Template);
+
+  Update = (function(_super) {
+
+    __extends(Update, _super);
+
     function Update() {
       Update.__super__.constructor.apply(this, arguments);
     }
+
     Update.prototype.keys = ["text", "value"];
+
     Update.prototype.bind = function(operators, model, el, options) {
-      el.bind("change", __bind(function() {
-        return this.change(operators, model, el, options);
-      }, this));
-      model.bind("change", __bind(function() {
-        return this.update(operators, model, el, options);
-      }, this));
+      var _this = this;
+      el.bind("change", function() {
+        return _this.change(operators, model, el, options);
+      });
+      model.bind("change", function() {
+        return _this.update(operators, model, el, options);
+      });
       return this.update(operators, model, el, options);
     };
+
     Update.prototype.unbind = function(operators, model, el, options) {
       el.unbind("change");
       return model.unbind("change");
     };
+
     Update.prototype.change = function(operators, model, el, options) {
       var binder;
       binder = this;
@@ -72,6 +83,7 @@
       });
       return this;
     };
+
     Update.prototype.update = function(operators, model, el, options) {
       var binder;
       binder = this;
@@ -103,32 +115,43 @@
       });
       return this;
     };
+
     return Update;
-  })();
-  Options = (function() {
-    __extends(Options, Template);
+
+  })(Template);
+
+  Options = (function(_super) {
+
+    __extends(Options, _super);
+
     function Options() {
       Options.__super__.constructor.apply(this, arguments);
     }
+
     Options.prototype.keys = ["options", "selectedOptions"];
+
     Options.prototype.bind = function(operators, model, el, options) {
-      model.bind("update", __bind(function() {
-        return this.update(operators, model, el, options);
-      }, this));
+      var _this = this;
+      model.bind("update", function() {
+        return _this.update(operators, model, el, options);
+      });
       this.update(operators, model, el, options);
       if (operators.some(function(e) {
         return e.name === "selectedOptions";
       })) {
-        return el.bind("change", __bind(function() {
-          return this.change(operators, model, el, options);
-        }, this));
+        return el.bind("change", function() {
+          return _this.change(operators, model, el, options);
+        });
       }
     };
+
     Options.prototype.unbind = function(operators, model, el, options) {
       return model.unbind("update");
     };
+
     Options.prototype.update = function(operators, model, el, options) {
-      var array, index, item, key, ops, opsSelected, option, result, selected, selectedOptions, value, _len, _ref, _ref2, _results;
+      var array, index, item, ops, opsSelected, option, result, selected, selectedOptions, _len, _ref, _ref2, _results,
+        _this = this;
       ops = operators.filter(function(e) {
         return e.name === "options";
       })[0];
@@ -136,9 +159,7 @@
         return e.name === "selectedOptions";
       });
       selectedOptions = opsSelected.length === 1 ? this.get(model, opsSelected[0].property) : [];
-      if (!(selectedOptions instanceof Array)) {
-        selectedOptions = [selectedOptions];
-      }
+      if (!(selectedOptions instanceof Array)) selectedOptions = [selectedOptions];
       array = this.get(model, ops.property);
       options = el.children('option');
       if (array instanceof Array) {
@@ -155,19 +176,20 @@
           return _results;
         })();
       } else {
-        result = (function() {
-          var _results;
-          _results = [];
-          for (key in array) {
-            if (!__hasProp.call(array, key)) continue;
-            value = array[key];
-            _results.push({
-              text: value,
-              value: key
-            });
+        result = Object.keys(array).map(function(r) {
+          return {
+            text: array[r],
+            value: r
+          };
+        }).sort(function(a, b) {
+          if (b.value === "") {
+            return 1;
+          } else if (a.value === "") {
+            return -1;
+          } else {
+            return a.text > b.text;
           }
-          return _results;
-        })();
+        });
       }
       for (index = 0, _len = result.length; index < _len; index++) {
         item = result[index];
@@ -176,20 +198,12 @@
         if (option === null) {
           el.append("<option value='" + item.value + "' " + selected + ">" + item.text + "</option>");
         } else {
-          if (option.text !== item.text) {
-            option.text(item.text);
-          }
-          if (option.value !== item.value) {
-            option.val(item.value);
-          }
+          if (option.text !== item.text) option.text(item.text);
+          if (option.value !== item.value) option.val(item.value);
           if (option.attr("selected") === "selected" || option.attr("selected") === true) {
-            if (selected.length === 0) {
-              option.removeAttr("selected");
-            }
+            if (selected.length === 0) option.removeAttr("selected");
           } else {
-            if (selected.length > 0) {
-              option.attr("selected", "selected");
-            }
+            if (selected.length > 0) option.attr("selected", "selected");
           }
         }
       }
@@ -201,6 +215,7 @@
         return _results;
       }
     };
+
     Options.prototype.change = function(operators, model, el, options) {
       var items, operator;
       operator = operators.filter(function(e) {
@@ -214,30 +229,36 @@
         model[operator.property] = [];
         model[operator.property] = model[operator.property].concat(items);
       } else {
-        if (items.length === 1) {
-          model[operator.property] = items[0];
-        }
+        if (items.length === 1) model[operator.property] = items[0];
       }
-      if (!options || options.save) {
-        return model.save();
-      }
+      if (!options || options.save) return model.save();
     };
+
     return Options;
-  })();
-  Click = (function() {
-    __extends(Click, Template);
+
+  })(Template);
+
+  Click = (function(_super) {
+
+    __extends(Click, _super);
+
     function Click() {
       Click.__super__.constructor.apply(this, arguments);
     }
+
     Click.prototype.keys = ["click"];
+
     Click.prototype.bind = function(operators, model, el, options) {
-      return el.bind("click", __bind(function() {
-        return this.click(operators, model, el, options);
-      }, this));
+      var _this = this;
+      return el.bind("click", function() {
+        return _this.click(operators, model, el, options);
+      });
     };
+
     Click.prototype.unbind = function(operators, model, el, options) {
       return el.unbind("click");
     };
+
     Click.prototype.click = function(operators, model, el, options) {
       var binder, operator, _i, _len, _results;
       binder = this;
@@ -248,23 +269,33 @@
       }
       return _results;
     };
+
     return Click;
-  })();
-  Enable = (function() {
-    __extends(Enable, Template);
+
+  })(Template);
+
+  Enable = (function(_super) {
+
+    __extends(Enable, _super);
+
     function Enable() {
       Enable.__super__.constructor.apply(this, arguments);
     }
+
     Enable.prototype.keys = ["enable"];
+
     Enable.prototype.bind = function(operators, model, el, options) {
-      model.bind("update", __bind(function() {
-        return this.update(operators, model, el, options);
-      }, this));
+      var _this = this;
+      model.bind("update", function() {
+        return _this.update(operators, model, el, options);
+      });
       return this.update(operators, model, el, options);
     };
+
     Enable.prototype.unbind = function(operators, model, el, options) {
       return model.unbind("update");
     };
+
     Enable.prototype.update = function(operators, model, el, options) {
       var operator, result;
       operator = operators.filter(function(e) {
@@ -277,23 +308,33 @@
         return el.attr("disabled", "disabled");
       }
     };
+
     return Enable;
-  })();
-  Visible = (function() {
-    __extends(Visible, Template);
+
+  })(Template);
+
+  Visible = (function(_super) {
+
+    __extends(Visible, _super);
+
     function Visible() {
       Visible.__super__.constructor.apply(this, arguments);
     }
+
     Visible.prototype.keys = ["visible"];
+
     Visible.prototype.bind = function(operators, model, el, options) {
-      model.bind("update", __bind(function() {
-        return this.update(operators, model, el, options);
-      }, this));
+      var _this = this;
+      model.bind("update", function() {
+        return _this.update(operators, model, el, options);
+      });
       return this.update(operators, model, el, options);
     };
+
     Visible.prototype.unbind = function(operators, model, el, options) {
       return model.unbind("update");
     };
+
     Visible.prototype.update = function(operators, model, el, options) {
       var operator, result;
       operator = operators.filter(function(e) {
@@ -306,23 +347,33 @@
         return el.hide();
       }
     };
+
     return Visible;
-  })();
-  Attribute = (function() {
-    __extends(Attribute, Template);
+
+  })(Template);
+
+  Attribute = (function(_super) {
+
+    __extends(Attribute, _super);
+
     function Attribute() {
       Attribute.__super__.constructor.apply(this, arguments);
     }
+
     Attribute.prototype.keys = ["attr"];
+
     Attribute.prototype.bind = function(operators, model, el, options) {
-      model.bind("update", __bind(function() {
-        return this.update(operators, model, el, options);
-      }, this));
+      var _this = this;
+      model.bind("update", function() {
+        return _this.update(operators, model, el, options);
+      });
       return this.update(operators, model, el, options);
     };
+
     Attribute.prototype.unbind = function(operators, model, el, options) {
       return model.unbind("update");
     };
+
     Attribute.prototype.update = function(operators, model, el, options) {
       var binder, json, operator, property, value;
       binder = this;
@@ -337,27 +388,37 @@
       }
       return this;
     };
+
     return Attribute;
-  })();
-  Checked = (function() {
-    __extends(Checked, Template);
+
+  })(Template);
+
+  Checked = (function(_super) {
+
+    __extends(Checked, _super);
+
     function Checked() {
       Checked.__super__.constructor.apply(this, arguments);
     }
+
     Checked.prototype.keys = ["checked"];
+
     Checked.prototype.bind = function(operators, model, el, options) {
-      el.bind("change", __bind(function() {
-        return this.change(operators, model, el, options);
-      }, this));
-      model.bind("change", __bind(function() {
-        return this.update(operators, model, el, options);
-      }, this));
+      var _this = this;
+      el.bind("change", function() {
+        return _this.change(operators, model, el, options);
+      });
+      model.bind("change", function() {
+        return _this.update(operators, model, el, options);
+      });
       return this.update(operators, model, el, options);
     };
+
     Checked.prototype.unbind = function(operators, model, el, options) {
       el.unbind("change");
       return model.unbind("change");
     };
+
     Checked.prototype.change = function(operators, model, el, options) {
       var operator, value;
       operator = operators.filter(function(e) {
@@ -370,6 +431,7 @@
         return this.set(model, operator.property, value, options);
       }
     };
+
     Checked.prototype.update = function(operators, model, el, options) {
       var operator, result, value;
       operator = operators.filter(function(e) {
@@ -391,8 +453,11 @@
         }
       }
     };
+
     return Checked;
-  })();
+
+  })(Template);
+
   DataBind = {
     binders: [new Update(), new Options(), new Click(), new Enable(), new Visible(), new Attribute(), new Checked()],
     refreshBindings: function(model) {
@@ -409,18 +474,14 @@
         _ref = controller.binders;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           binder = _ref[_i];
-          if (binder.keys.indexOf(key) >= 0) {
-            return binder;
-          }
+          if (binder.keys.indexOf(key) >= 0) return binder;
         }
         return null;
       };
       addElement = function(elements, info, property) {
         var binder, element, matching;
         binder = findBinder(info.name);
-        if (binder === null) {
-          return;
-        }
+        if (binder === null) return;
         matching = elements.filter(function(e) {
           return e.el[0] === info.element[0] && e.binder === binder;
         });
@@ -516,5 +577,7 @@
       return this;
     }
   };
+
   this.Spine.DataBind = DataBind;
+
 }).call(this);
