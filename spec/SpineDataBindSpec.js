@@ -158,8 +158,9 @@ describe("Spine.DataBind", function() {
 			it("should bind hashes", function() {
 				var companySelect = $('#company');
 				var companyHtml = [
-					'<option value="0">Google</option>',
-					'<option value="1">Apple</option>'
+					'<option value="" selected="selected">Select...</option>',
+					'<option value="1">Apple</option>',
+					'<option value="0">Google</option>'
 				].join("");
 				expect(companySelect.html()).toBe(companyHtml);
 			});
@@ -185,7 +186,7 @@ describe("Spine.DataBind", function() {
 					phoneNumbers: [ "555-555-1010", "555-101-9999" ],
 					phoneNumbersSelected: [],
 					company: "",
-					companies: { 0: "Google", 1: "Apple" }
+					companies: { "": "Select...", 0: "Google", 1: "Apple" }
 				});
 
 				PersonController.include({
@@ -216,7 +217,7 @@ describe("Spine.DataBind", function() {
 					phoneNumbers: [ "555-555-1010", "555-101-9999" ],
 					phoneNumbersSelected: [],
 					company: "",
-					companies: { 0: "Google", 1: "Apple" }
+					companies: { "": "Select...", 0: "Google", 1: "Apple" }
 				});
 
 				Controller = PersonController.init({ el: 'body', model:Person });
@@ -383,7 +384,7 @@ describe("Spine.DataBind", function() {
 				Person.save();
 
 				var reset = $('#reset');
-				expect(reset.css('display')).toBe('inline-block');
+				expect(reset.css('display')).toNotBe('none');
 			});	
 		};
 

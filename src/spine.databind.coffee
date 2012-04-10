@@ -88,7 +88,16 @@ class Options extends Template
 		if array instanceof Array
 			result = ({ text: item, value: item} for item in array)
 		else
-			result = ({ text: value, value: key } for own key, value of array)				
+		    result = Object.keys(array)
+		                   .map((r) => { text: array[r], value: r })
+		                   .sort((a,b) => 
+		                   		if (b.value == "")
+		                   			return 1
+		                   		else if (a.value == "")
+		                   			return -1
+		                   		else
+		                   			return a.text > b.text
+		                   	)
 
 		for item,index in result
 			option = if options.length > index then $(options[index]) else null
