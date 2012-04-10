@@ -96,7 +96,7 @@ class Options extends Template
 		                   		else if (a.value == "")
 		                   			return -1
 		                   		else
-		                   			return a.text > b.text
+		                   			return a.text.localeCompare(b.text)
 		                   	)
 
 		for item,index in result
