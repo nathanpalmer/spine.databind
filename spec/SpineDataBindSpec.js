@@ -22,7 +22,7 @@ describe("Spine.DataBind", function() {
 
 		PersonController.include(Spine.DataBind);
 	});
-	
+
 	describe("Update", function() {
 		var Person, Controller;
 
@@ -98,7 +98,7 @@ describe("Spine.DataBind", function() {
 					"<input type='textarea' id='firstNameTextArea'/>",
 					"<select id='firstNameSelect'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>"
 				].join(""));
-				
+
 				PersonController.include({
 					bindings: {
 						"text #firstNameSpan":"firstName",
@@ -125,7 +125,7 @@ describe("Spine.DataBind", function() {
 					"<input type='textarea' id='firstNameTextArea' data-bind='value: firstName'/>",
 					"<select id='firstNameSelect' data-bind='value: firstName'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>"
 				].join(""));
-				
+
 				Person = PersonCollection.create({ firstName: "Nathan", lastName: "Palmer" });
 				Controller = PersonController.init({ el: 'body', model:Person });
 			});
@@ -133,7 +133,7 @@ describe("Spine.DataBind", function() {
 			Tests();
 		});
 	});
-	
+
 	describe("Options", function() {
 		var Person, Controller;
 
@@ -204,57 +204,57 @@ describe("Spine.DataBind", function() {
 			Tests();			
 		});
 
-        describe("with empty options and/or selectedOptions bindings", function() {
-            var Person, Controller;
-            beforeEach(function() {
-                setFixtures([
-                    "<select id='company'/>"
-                ].join(""));
+		describe("with empty options and/or selectedOptions bindings", function() {
+			var Person, Controller;
+			beforeEach(function() {
+				setFixtures([
+					"<select id='company'/>"
+				].join(""));
 
-                PersonController.include({
-                    bindings: {
-                        "options #company":"companies",
-                        "selectedOptions #company":"company"
-                    }
-                });
-            });
+				PersonController.include({
+					bindings: {
+						"options #company":"companies",
+						"selectedOptions #company":"company"
+					}
+				});
+			});
 
-            it("should handle a bound undefined options", function() {
-                Person = PersonCollection.create({
-                    firstName: "Nathan",
-                    lastName: "Palmer",
-                    phoneNumbers: [],
-                    phoneNumbersSelected: [],
-                    company: '',
-                    companies: undefined
-                });
-                Controller = PersonController.init({
-                    el: 'body',
-                    model: Person,
-                    init: function() {
-                        this.refreshBindings(this.model);
-                    }
-                });
-            });
+			it("should handle a bound undefined options", function() {
+				Person = PersonCollection.create({
+					firstName: "Nathan",
+					lastName: "Palmer",
+					phoneNumbers: [],
+					phoneNumbersSelected: [],
+					company: '',
+					companies: undefined
+				});
+				Controller = PersonController.init({
+					el: 'body',
+					model: Person,
+					init: function() {
+						this.refreshBindings(this.model);
+					}
+				});
+			});
 
-            it("should handle a bound undefined selectedOptions", function() {
-                Person = PersonCollection.create({
-                    firstName: "Nathan",
-                    lastName: "Palmer",
-                    phoneNumbers: [],
-                    phoneNumbersSelected: [],
-                    company: undefined,
-                    companies: { "": "Select...", 0: "Google", 1: "Apple" }
-                });
-                Controller = PersonController.init({
-                    el: 'body',
-                    model: Person,
-                    init: function() {
-                        this.refreshBindings(this.model);
-                    }
-                });
-            });
-        });
+			it("should handle a bound undefined selectedOptions", function() {
+				Person = PersonCollection.create({
+					firstName: "Nathan",
+					lastName: "Palmer",
+					phoneNumbers: [],
+					phoneNumbersSelected: [],
+					company: undefined,
+					companies: { "": "Select...", 0: "Google", 1: "Apple" }
+				});
+				Controller = PersonController.init({
+					el: 'body',
+					model: Person,
+					init: function() {
+						this.refreshBindings(this.model);
+					}
+				});
+			});
+		});
 
 		describe("with data-bind", function() {
 			beforeEach(function() {
@@ -303,7 +303,7 @@ describe("Spine.DataBind", function() {
 				});
 
 				setFixtures("<input id='reset' type='button' value='reset'/>");
-				
+
 				Person = PersonCollection.create({ 
 					firstName: "Nathan", 
 					lastName: "Palmer"
@@ -331,7 +331,7 @@ describe("Spine.DataBind", function() {
 				});
 
 				setFixtures("<input id='reset' type='button' value='reset' data-bind='click: resetName'/>");
-				
+
 				Person = PersonCollection.create({ 
 					firstName: "Nathan", 
 					lastName: "Palmer"
@@ -375,7 +375,7 @@ describe("Spine.DataBind", function() {
 				});
 
 				setFixtures("<input id='reset' type='button' value='reset'/>");
-				
+
 				Person = PersonCollection.create({ 
 					firstName: "Nathan", 
 					lastName: "Palmer",
@@ -393,7 +393,7 @@ describe("Spine.DataBind", function() {
 
 			Tests();
 		});
-		
+
 		describe("with data-bind", function() {
 			beforeEach(function() {
 				PersonCollection.include({
@@ -407,7 +407,7 @@ describe("Spine.DataBind", function() {
 				});
 
 				setFixtures("<input id='reset' type='button' value='reset' data-bind='enable: phoneNumberCount'/>");
-				
+
 				Person = PersonCollection.create({ 
 					firstName: "Nathan", 
 					lastName: "Palmer",
@@ -420,7 +420,7 @@ describe("Spine.DataBind", function() {
 			Tests();
 		});	
 	});
-	
+
 	describe("Visible", function() {
 		var Person, Controller;
 
@@ -452,7 +452,7 @@ describe("Spine.DataBind", function() {
 				});
 
 				setFixtures("<input id='reset' type='button' value='reset'/>");
-				
+
 				Person = PersonCollection.create({ 
 					firstName: "Nathan", 
 					lastName: "Palmer",
@@ -484,7 +484,7 @@ describe("Spine.DataBind", function() {
 				});
 
 				setFixtures("<input id='reset' type='button' value='reset' data-bind='visible: phoneNumberCount'/>");
-				
+
 				Person = PersonCollection.create({ 
 					firstName: "Nathan", 
 					lastName: "Palmer",
@@ -511,7 +511,7 @@ describe("Spine.DataBind", function() {
 		describe("with bindings", function() {
 			beforeEach(function() {
 				setFixtures("<a id='homepage'/>");
-				
+
 				Person = PersonCollection.create({ 
 					firstName: "Nathan", 
 					lastName: "Palmer",
@@ -534,7 +534,7 @@ describe("Spine.DataBind", function() {
 		describe("with data-bind", function() {
 			beforeEach(function() {
 				setFixtures("<a id='homepage' data-bind='attr: { \"href\": \"homepage\" }'/>");
-				
+
 				Person = PersonCollection.create({ 
 					firstName: "Nathan", 
 					lastName: "Palmer",
