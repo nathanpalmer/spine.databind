@@ -204,6 +204,58 @@ describe("Spine.DataBind", function() {
 			Tests();			
 		});
 
+        describe("with empty options and/or selectedOptions bindings", function() {
+            var Person, Controller;
+            beforeEach(function() {
+                setFixtures([
+                    "<select id='company'/>"
+                ].join(""));
+
+                PersonController.include({
+                    bindings: {
+                        "options #company":"companies",
+                        "selectedOptions #company":"company"
+                    }
+                });
+            });
+
+            it("should handle a bound undefined options", function() {
+                Person = PersonCollection.create({
+                    firstName: "Nathan",
+                    lastName: "Palmer",
+                    phoneNumbers: [],
+                    phoneNumbersSelected: [],
+                    company: '',
+                    companies: undefined
+                });
+                Controller = PersonController.init({
+                    el: 'body',
+                    model: Person,
+                    init: function() {
+                        this.refreshBindings(this.model);
+                    }
+                });
+            });
+
+            it("should handle a bound undefined selectedOptions", function() {
+                Person = PersonCollection.create({
+                    firstName: "Nathan",
+                    lastName: "Palmer",
+                    phoneNumbers: [],
+                    phoneNumbersSelected: [],
+                    company: undefined,
+                    companies: { "": "Select...", 0: "Google", 1: "Apple" }
+                });
+                Controller = PersonController.init({
+                    el: 'body',
+                    model: Person,
+                    init: function() {
+                        this.refreshBindings(this.model);
+                    }
+                });
+            });
+        });
+
 		describe("with data-bind", function() {
 			beforeEach(function() {
 				setFixtures([
@@ -226,9 +278,8 @@ describe("Spine.DataBind", function() {
 			Tests();
 		});
 
-		
 	});
-	
+
 	describe("Click", function() {
 		var Person, Controller;
 

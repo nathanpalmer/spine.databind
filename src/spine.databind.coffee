@@ -82,7 +82,7 @@ class Options extends Template
 		selectedOptions = if opsSelected.length is 1 then @get(model,opsSelected[0].property) else [] 
 		selectedOptions = [selectedOptions] if not (selectedOptions instanceof Array)
 			
-		array = @get(model,ops.property)
+		array = @get(model,ops.property) or []
 		options = el.children('option')
 
 		if array instanceof Array

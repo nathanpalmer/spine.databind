@@ -169,7 +169,7 @@
       if (!(selectedOptions instanceof Array)) {
         selectedOptions = [selectedOptions];
       }
-      array = this.get(model, ops.property);
+      array = this.get(model, ops.property) || [];
       options = el.children('option');
       if (array instanceof Array) {
         result = (function() {
