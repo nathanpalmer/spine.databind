@@ -1,8 +1,14 @@
 describe("Spine.DataBind", function() {
-	var PersonCollection, PersonController;
+	var PersonCollection, PersonController, Watch = false;
 
 	beforeEach(function() {
-		PersonCollection = Spine.Model.setup("Person", [ 
+		PersonCollection = Spine.Model.sub({
+			init: function() {
+				if (Watch) this.prepareWatch();
+			}
+		});
+
+		PersonCollection.configure("Person", 
 			"firstName", 
 			"lastName", 
 			"phoneNumbers", 
@@ -12,7 +18,7 @@ describe("Spine.DataBind", function() {
 			"person",
 			"title",
 			"homepage"
-		]);
+		);
 
 		PersonController = Spine.Controller.create({
 			init: function() {
@@ -34,6 +40,15 @@ describe("Spine.DataBind", function() {
 				expect(firstNameSpanText).toBe("Nathan");
 			});
 
+			it("should change span when model is updated", function() {
+				Person.firstName = "Eric";
+				if (!Watch) Person.save();
+				var firstNameSpan = $('#firstNameSpan');
+				var firstNameSpanText = firstNameSpan.text();
+
+				expect(firstNameSpanText).toBe("Eric");
+			});
+
 			it("should bind div", function() {
 				var firstNameDiv = $('#firstNameDiv');
 				var firstNameDivText = firstNameDiv.text();
@@ -41,11 +56,29 @@ describe("Spine.DataBind", function() {
 				expect(firstNameDivText).toBe("Nathan");
 			});
 
+			it("should change div when model is updated", function() {
+				Person.firstName = "Eric";
+				if (!Watch) Person.save();
+				var firstNameDiv = $('#firstNameDiv');
+				var firstNameDivText = firstNameDiv.text();
+
+				expect(firstNameDivText).toBe("Eric");
+			});
+
 			it("should bind on input", function() {
 				var firstNameInput = $('#firstName');
 				var firstNameInputText = firstNameInput.val();
 
 				expect(firstNameInputText).toBe("Nathan");
+			});
+
+			it("should change input when model is updated", function() {
+				Person.firstName = "Eric";
+				if (!Watch) Person.save();
+				var firstNameInput = $('#firstName');
+				var firstNameInputText = firstNameInput.val();
+
+				expect(firstNameInputText).toBe("Eric");
 			});
 
 			it("should change model when changed on input", function() {
@@ -109,6 +142,36 @@ describe("Spine.DataBind", function() {
 					}
 				});
 
+				Watch = false;
+				Person = PersonCollection.create({ firstName: "Nathan", lastName: "Palmer" });
+				Controller = PersonController.init({ el: 'body', model:Person });
+			});
+
+			Tests();
+		});
+
+		describe("with bindings and watch", function() {
+			beforeEach(function() {
+				setFixtures([
+					"<span id='firstNameSpan'/>",
+					"<div id='firstNameDiv'/>",
+					"<input type='text' id='firstName'/>",
+					"<input type='textarea' id='firstNameTextArea'/>",
+					"<select id='firstNameSelect'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>"
+				].join(""));
+
+				PersonController.include({
+					bindings: {
+						"text #firstNameSpan":"firstName",
+						"text #firstNameDiv":"firstName",
+						"value #firstName":"firstName",
+						"value #firstNameTextArea":"firstName",
+						"value #firstNameSelect":"firstName"
+					}
+				});
+
+				Watch = true;
+				PersonCollection.include(Spine.Watch);
 				Person = PersonCollection.create({ firstName: "Nathan", lastName: "Palmer" });
 				Controller = PersonController.init({ el: 'body', model:Person });
 			});
@@ -126,6 +189,7 @@ describe("Spine.DataBind", function() {
 					"<select id='firstNameSelect' data-bind='value: firstName'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>"
 				].join(""));
 
+				Watch = false;
 				Person = PersonCollection.create({ firstName: "Nathan", lastName: "Palmer" });
 				Controller = PersonController.init({ el: 'body', model:Person });
 			});

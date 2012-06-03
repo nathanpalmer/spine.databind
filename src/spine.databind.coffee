@@ -22,12 +22,17 @@ class Update extends Template
 
 	bind: (operators,model,el,options) ->
 		el.bind("change", => @change(operators,model,el,options))
-		model.bind("change", => @update(operators,model,el,options))
+		if options.watch
+			for operator in operators
+				model.bind("update["+operator.property+"]", => @update([operator],model,el,options))
+		else
+			model.bind("change", => @update(operators,model,el,options))
 		@update(operators,model,el,options)
-
+ 
 	unbind: (operators,model,el,options) ->
 		el.unbind("change")
-		model.unbind("change")
+		eventName = if options.watch "update["+operator.property+"]" else "update"
+		model.unbind(eventName)
 
 	change: (operators,model,el,options) ->
 		binder = @
@@ -36,9 +41,9 @@ class Update extends Template
 			for operator in operators
 				switch @tagName
 					when "INPUT", "SELECT", "TEXTAREA"
-						binder.set(model,operator.property,e.val())
+						binder.set(model,operator.property,e.val(), options)
 					else
-						binder.set(model,operator.property,e.text())
+						binder.set(model,operator.property,e.text(), options)
 			@
 		@
 
@@ -260,7 +265,9 @@ DataBind =
 		splitter = /(\w+)(\\[.*])? (.*)/
 
 		options = 
-			save: true
+			save: if model.watchEnabled then false else true
+			watch: if model.watchEnabled then true else false
+
 		$.extend(options, controller.bindingOptions)
 
 		findBinder = (key) ->
