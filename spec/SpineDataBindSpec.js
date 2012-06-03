@@ -249,6 +249,20 @@ describe("Spine.DataBind", function() {
 				expect(phoneNumberSelect.html()).toBe(phoneNumberHtml);
 			});
 
+			it("should update options when model is changed", function() {
+				// Spine.Watch cannot current detect changes to an array
+				//Person.phoneNumbers.push("555-199-0030");
+				Person.phoneNumbers = [ "555-555-1010", "555-101-9999", "555-199-0030" ];
+				if (!Watch) Person.save();
+				var phoneNumberSelect = $('#phoneNumbers');
+				var phoneNumberHtml = [
+					'<option value="555-555-1010">555-555-1010</option>',
+					'<option value="555-101-9999">555-101-9999</option>',
+					'<option value="555-199-0030">555-199-0030</option>'
+				].join("");
+				expect(phoneNumberSelect.html()).toBe(phoneNumberHtml);
+			});
+
 			it("should bind selectedOptions", function() {
 				var phoneNumberSelect = $('#phoneNumbers');
 				phoneNumberSelect.find("option[value='555-101-9999']").attr("selected", "selected");
@@ -281,6 +295,41 @@ describe("Spine.DataBind", function() {
 					"<select id='phoneNumbers'/>",
 					"<select id='company'/>"
 				].join(""));
+				
+				Watch = false;
+				Person = PersonCollection.create({ 
+					firstName: "Nathan", 
+					lastName: "Palmer",
+					phoneNumbers: [ "555-555-1010", "555-101-9999" ],
+					phoneNumbersSelected: [],
+					company: "",
+					companies: { "": "Select...", 0: "Google", 1: "Apple" }
+				});
+
+				PersonController.include({
+					bindings: {
+						"options #phoneNumbers":"phoneNumbers",
+						"selectedOptions #phoneNumbers":"phoneNumbersSelected",
+						"options #company":"companies",
+						"selectedOptions #company":"company"
+					}
+				});
+
+				Controller = PersonController.init({ el: 'body', model:Person });
+			});
+
+			Tests();			
+		});
+
+		describe("with bindings and watch", function() {
+			beforeEach(function() {
+				setFixtures([
+					"<select id='phoneNumbers'/>",
+					"<select id='company'/>"
+				].join(""));
+
+				PersonCollection.include(Spine.Watch);
+				Watch = true;
 
 				Person = PersonCollection.create({ 
 					firstName: "Nathan", 
@@ -313,6 +362,7 @@ describe("Spine.DataBind", function() {
 					"<select id='company'/>"
 				].join(""));
 
+				Watch = false;
 				PersonController.include({
 					bindings: {
 						"options #company":"companies",
@@ -365,6 +415,7 @@ describe("Spine.DataBind", function() {
 					"<select id='company' data-bind='options: companies, selectedOptions: company'/>"
 				].join(""));
 
+				Watch = false;
 				Person = PersonCollection.create({ 
 					firstName: "Nathan", 
 					lastName: "Palmer",

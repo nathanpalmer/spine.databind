@@ -23,8 +23,7 @@ class Update extends Template
 	bind: (operators,model,el,options) ->
 		el.bind("change", => @change(operators,model,el,options))
 		if options.watch
-			for operator in operators
-				model.bind("update["+operator.property+"]", => @update([operator],model,el,options))
+			model.bind("update["+operator.property+"]", => @update([operator],model,el,options)) for operator in operators
 		else
 			model.bind("change", => @update(operators,model,el,options))
 		@update(operators,model,el,options)
@@ -75,7 +74,12 @@ class Options extends Template
 	keys: [ "options", "selectedOptions" ]
 
 	bind: (operators,model,el,options) ->
-		model.bind("update", => @update(operators,model,el,options))
+		if options.watch
+			ops = operators.filter((e) -> e.name is "options")[0]
+			opsSelected = operators.filter((e) -> e.name is "selectedOptions")
+			model.bind("update["+ops.property+"]", => @update([ops,opsSelected],model,el,options)) for operator in operators
+		else
+			model.bind("update", => @update(operators,model,el,options))
 		@update(operators,model,el,options)
 
 		if operators.some((e) -> e.name is "selectedOptions")
@@ -90,7 +94,7 @@ class Options extends Template
 		selectedOptions = if opsSelected.length is 1 then @get(model,opsSelected[0].property) else [] 
 		selectedOptions = [selectedOptions] if not (selectedOptions instanceof Array)
 			
-		array = @get(model,ops.property) or []
+		array = if ops then @get(model,ops.property) or [] else []
 		options = el.children('option')
 
 		if array instanceof Array
@@ -114,8 +118,8 @@ class Options extends Template
 			if option is null
 				el.append "<option value='#{item.value}' #{selected}>#{item.text}</option>"
 			else
-				option.text(item.text) if option.text isnt item.text
-				option.val(item.value) if option.value isnt item.value
+				option.text(item.text) if option.text() isnt item.text
+				option.val(item.value) if option.val?() isnt item.value
 				if option.attr("selected") is "selected" or option.attr("selected") is true
 					option.removeAttr("selected") if selected.length is 0
 				else

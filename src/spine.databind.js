@@ -127,9 +127,25 @@
     }
     Options.prototype.keys = ["options", "selectedOptions"];
     Options.prototype.bind = function(operators, model, el, options) {
-      model.bind("update", __bind(function() {
-        return this.update(operators, model, el, options);
-      }, this));
+      var operator, ops, opsSelected, _i, _len;
+      if (options.watch) {
+        ops = operators.filter(function(e) {
+          return e.name === "options";
+        })[0];
+        opsSelected = operators.filter(function(e) {
+          return e.name === "selectedOptions";
+        });
+        for (_i = 0, _len = operators.length; _i < _len; _i++) {
+          operator = operators[_i];
+          model.bind("update[" + ops.property + "]", __bind(function() {
+            return this.update([ops, opsSelected], model, el, options);
+          }, this));
+        }
+      } else {
+        model.bind("update", __bind(function() {
+          return this.update(operators, model, el, options);
+        }, this));
+      }
       this.update(operators, model, el, options);
       if (operators.some(function(e) {
         return e.name === "selectedOptions";
@@ -154,7 +170,7 @@
       if (!(selectedOptions instanceof Array)) {
         selectedOptions = [selectedOptions];
       }
-      array = this.get(model, ops.property) || [];
+      array = ops ? this.get(model, ops.property) || [] : [];
       options = el.children('option');
       if (array instanceof Array) {
         result = (function() {
@@ -192,10 +208,10 @@
         if (option === null) {
           el.append("<option value='" + item.value + "' " + selected + ">" + item.text + "</option>");
         } else {
-          if (option.text !== item.text) {
+          if (option.text() !== item.text) {
             option.text(item.text);
           }
-          if (option.value !== item.value) {
+          if ((typeof option.val === "function" ? option.val() : void 0) !== item.value) {
             option.val(item.value);
           }
           if (option.attr("selected") === "selected" || option.attr("selected") === true) {
