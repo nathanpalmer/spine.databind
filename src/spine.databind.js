@@ -127,20 +127,20 @@
     }
     Options.prototype.keys = ["options", "selectedOptions"];
     Options.prototype.bind = function(operators, model, el, options) {
-      var operator, ops, opsSelected, _i, _len;
+      var ops, opsSelected;
       if (options.watch) {
         ops = operators.filter(function(e) {
           return e.name === "options";
         })[0];
         opsSelected = operators.filter(function(e) {
           return e.name === "selectedOptions";
-        });
-        for (_i = 0, _len = operators.length; _i < _len; _i++) {
-          operator = operators[_i];
-          model.bind("update[" + ops.property + "]", __bind(function() {
-            return this.update([ops, opsSelected], model, el, options);
-          }, this));
-        }
+        })[0];
+        model.bind("update[" + ops.property + "]", __bind(function() {
+          return this.update([ops, opsSelected], model, el, options);
+        }, this));
+        model.bind("update[" + opsSelected.property + "]", __bind(function() {
+          return this.update([ops, opsSelected], model, el, options);
+        }, this));
       } else {
         model.bind("update", __bind(function() {
           return this.update(operators, model, el, options);
@@ -156,7 +156,24 @@
       }
     };
     Options.prototype.unbind = function(operators, model, el, options) {
-      return model.unbind("update");
+      var ops, opsSelected;
+      if (operators.some(function(e) {
+        return e.name === "selectedOptions";
+      })) {
+        el.unbind("change");
+      }
+      if (options.watch) {
+        ops = operators.filter(function(e) {
+          return e.name === "options";
+        })[0];
+        opsSelected = operators.filter(function(e) {
+          return e.name === "selectedOptions";
+        })[0];
+        model.unbind("update[" + ops.property + "]");
+        return model.unbind("update[" + opsSelected.property + "]");
+      } else {
+        return model.unbind("update");
+      }
     };
     Options.prototype.update = function(operators, model, el, options) {
       var array, index, item, ops, opsSelected, option, result, selected, selectedOptions, _len, _ref, _ref2, _results;

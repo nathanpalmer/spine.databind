@@ -271,6 +271,21 @@ describe("Spine.DataBind", function() {
 				expect(Person.phoneNumbersSelected[0]).toBe(Person.phoneNumbers[1]);
 			});
 
+			it("should update selectedOptions when model is changed", function() {
+				var phoneNumberSelect = $('#phoneNumbers');
+				var phoneNumber1 = function() { return phoneNumberSelect.find("option[value='555-555-1010']").attr("selected"); };
+				var phoneNumber2 = function() { return phoneNumberSelect.find("option[value='555-101-9999']").attr("selected"); };
+
+				expect(phoneNumber1()).toBe("selected");
+				expect(phoneNumber2()).toBe(undefined);
+
+				Person.phoneNumbersSelected = [ "555-101-9999" ];
+				if (!Watch) Person.save();
+				
+				expect(phoneNumber1()).toBe(undefined);
+				expect(phoneNumber2()).toBe("selected");
+			});
+
 			it("should bind hashes", function() {
 				var companySelect = $('#company');
 				var companyHtml = [

@@ -76,8 +76,9 @@ class Options extends Template
 	bind: (operators,model,el,options) ->
 		if options.watch
 			ops = operators.filter((e) -> e.name is "options")[0]
-			opsSelected = operators.filter((e) -> e.name is "selectedOptions")
-			model.bind("update["+ops.property+"]", => @update([ops,opsSelected],model,el,options)) for operator in operators
+			opsSelected = operators.filter((e) -> e.name is "selectedOptions")[0]
+			model.bind("update["+ops.property+"]", => @update([ops,opsSelected],model,el,options))
+			model.bind("update["+opsSelected.property+"]", => @update([ops,opsSelected],model,el,options))
 		else
 			model.bind("update", => @update(operators,model,el,options))
 		@update(operators,model,el,options)
@@ -86,7 +87,14 @@ class Options extends Template
 			el.bind("change", => @change(operators,model,el,options))
 
 	unbind: (operators,model,el,options) ->
-		model.unbind("update")
+		el.unbind("change") if operators.some((e) -> e.name is "selectedOptions")
+		if options.watch
+			ops = operators.filter((e) -> e.name is "options")[0]
+			opsSelected = operators.filter((e) -> e.name is "selectedOptions")[0]
+			model.unbind("update["+ops.property+"]")
+			model.unbind("update["+opsSelected.property+"]")
+		else
+			model.unbind("update")
 
 	update: (operators,model,el,options) ->
 		ops = operators.filter((e) -> e.name is "options")[0]
