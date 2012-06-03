@@ -99,6 +99,9 @@
               e.val(value);
               break;
             case "SELECT":
+              e.find("option[selected]").each(function(key, element) {
+                return $(element).removeAttr("selected");
+              });
               e.find("option[value=" + value + "]").attr("selected", "selected");
               break;
             default:

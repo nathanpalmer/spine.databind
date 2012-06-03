@@ -57,6 +57,9 @@ class Update extends Template
 					when "INPUT", "TEXTAREA"
 						e.val(value)
 					when "SELECT"
+						# Deselect
+						e.find("option[selected]").each((key,element) -> $(element).removeAttr("selected"))
+						# Select
 						e.find("option[value=#{value}]").attr("selected","selected")
 					else
 						if typeof value is "object" and value.constructor is Array

@@ -104,6 +104,15 @@ describe("Spine.DataBind", function() {
 				expect(Person.firstName).toBe("Eric");	
 			});
 
+			it("should change textarea when model is updated", function() {
+				Person.firstName = "Eric";
+				if (!Watch) Person.save();
+				var firstNameInput = $('#firstNameTextArea');
+				var firstNameInputText = firstNameInput.val();
+
+				expect(firstNameInputText).toBe("Eric");
+			});
+
 			it("should bind on select", function() {
 				var firstNameInput = $('#firstNameSelect');
 				var firstNameInputText = firstNameInput.find("option:selected").val();
@@ -119,6 +128,16 @@ describe("Spine.DataBind", function() {
 				firstNameInput.trigger("change");
 
 				expect(Person.firstName).toBe("Eric");
+			});
+
+			it("should change select when model is updated", function() {
+				Person.firstName = "Eric";
+				if (!Watch) Person.save();				
+
+				var firstNameInput = $('#firstNameSelect');
+				var firstNameInputAttr = firstNameInput.find("option[value='Eric']").attr("selected");
+
+				expect(firstNameInputAttr).toBe("selected");
 			});
 		};
 
@@ -196,6 +215,25 @@ describe("Spine.DataBind", function() {
 
 			Tests();
 		});
+
+		/*describe("with data-bind and watch", function() {
+			beforeEach(function() {
+				setFixtures([
+					"<span id='firstNameSpan' data-bind='text: firstName'/>",
+					"<div id='firstNameDiv' data-bind='text: firstName'/>",
+					"<input type='text' id='firstName' data-bind='value: firstName'/>",
+					"<input type='textarea' id='firstNameTextArea' data-bind='value: firstName'/>",
+					"<select id='firstNameSelect' data-bind='value: firstName'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>"
+				].join(""));
+
+				Watch = true;
+				PersonCollection.include(Spine.Watch);
+				Person = PersonCollection.create({ firstName: "Nathan", lastName: "Palmer" });
+				Controller = PersonController.init({ el: 'body', model:Person });
+			});
+
+			Tests();
+		});*/
 	});
 
 	describe("Options", function() {
