@@ -216,7 +216,7 @@ describe("Spine.DataBind", function() {
 			Tests();
 		});
 
-		/*describe("with data-bind and watch", function() {
+		describe("with data-bind and watch", function() {
 			beforeEach(function() {
 				setFixtures([
 					"<span id='firstNameSpan' data-bind='text: firstName'/>",
@@ -233,7 +233,7 @@ describe("Spine.DataBind", function() {
 			});
 
 			Tests();
-		});*/
+		});
 	});
 
 	describe("Options", function() {
@@ -523,7 +523,7 @@ describe("Spine.DataBind", function() {
 
 			it("should enable when phone numbers present", function() {
 				Person.phoneNumbers.push("555-555-9090");
-				Person.save();
+				if (!Watch) Person.save();
 
 				var reset = $('#reset');
 				expect(reset.attr('disabled')).toBe(undefined);
@@ -550,6 +550,8 @@ describe("Spine.DataBind", function() {
 					phoneNumbers: []
 				});
 
+				Watch = false;
+
 				PersonController.include({
 					bindings: {
 						"enable input":"phoneNumberCount"
@@ -560,6 +562,56 @@ describe("Spine.DataBind", function() {
 			});
 
 			Tests();
+		});
+
+		describe("with bindings and watch", function() {
+			beforeEach(function() {
+				PersonCollection.include({
+					phoneNumberCount: function() {
+						return this.phoneNumbers.length;
+					},
+					reset: function() {
+						this.phoneNumbers = [];
+						this.save();
+					}
+				});
+				PersonCollection.include(Spine.Watch);
+
+				setFixtures("<input id='reset' type='button' value='reset'/>");
+
+				Person = PersonCollection.create({ 
+					firstName: "Nathan", 
+					lastName: "Palmer",
+					phoneNumbers: []
+				});
+
+				Watch = true;
+
+				PersonController.include({
+					bindings: {
+						"enable input":"phoneNumbers"
+					}
+				});
+
+				Controller = PersonController.init({ el: 'body', model:Person });
+			});
+
+			// These tests are skipped for now because Spine.Watch hasn't
+			// implemented any functionality that will subscribe to events
+			// of dependent fields (in this case the phoneNumbers field)
+			// when called by a function.
+			//Tests();
+
+			it("should start out enabled", function() {
+				var reset = $('#reset');
+				expect(reset.attr('disabled')).toBe(undefined);
+			});
+
+			it("should changed to disabled", function() {
+				var reset = $('#reset');
+				Person.phoneNumbers = null;
+				expect(reset.attr('disabled')).toBe('disabled');
+			});
 		});
 
 		describe("with data-bind", function() {
@@ -575,6 +627,8 @@ describe("Spine.DataBind", function() {
 				});
 
 				setFixtures("<input id='reset' type='button' value='reset' data-bind='enable: phoneNumberCount'/>");
+
+				Watch = false;
 
 				Person = PersonCollection.create({ 
 					firstName: "Nathan", 
@@ -626,6 +680,8 @@ describe("Spine.DataBind", function() {
 					lastName: "Palmer",
 					phoneNumbers: []
 				});
+
+				Watch = false;
 
 				PersonController.include({
 					bindings: {

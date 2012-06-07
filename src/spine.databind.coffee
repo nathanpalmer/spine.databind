@@ -173,11 +173,15 @@ class Enable extends Template
 	keys: [ "enable" ]
 
 	bind: (operators,model,el,options) ->
-		model.bind("update", => @update(operators,model,el,options))
+		if options.watch
+			model.bind("update["+operator.property+"]", => @update([operator],model,el,options)) for operator in operators
+		else
+			model.bind("update", => @update(operators,model,el,options))		
 		@update(operators,model,el,options)
 
 	unbind: (operators,model,el,options) ->
-		model.unbind("update")
+		eventName = if options.watch "update["+operator.property+"]" else "update"
+		model.unbind(eventName)
 
 	update: (operators,model,el,options) ->
 		operator = operators.filter((e) -> e.name is "enable")[0]

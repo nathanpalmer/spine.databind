@@ -306,13 +306,25 @@
     }
     Enable.prototype.keys = ["enable"];
     Enable.prototype.bind = function(operators, model, el, options) {
-      model.bind("update", __bind(function() {
-        return this.update(operators, model, el, options);
-      }, this));
+      var operator, _i, _len;
+      if (options.watch) {
+        for (_i = 0, _len = operators.length; _i < _len; _i++) {
+          operator = operators[_i];
+          model.bind("update[" + operator.property + "]", __bind(function() {
+            return this.update([operator], model, el, options);
+          }, this));
+        }
+      } else {
+        model.bind("update", __bind(function() {
+          return this.update(operators, model, el, options);
+        }, this));
+      }
       return this.update(operators, model, el, options);
     };
     Enable.prototype.unbind = function(operators, model, el, options) {
-      return model.unbind("update");
+      var eventName;
+      eventName = options.watch("update[" + operator.property + "]") ? void 0 : "update";
+      return model.unbind(eventName);
     };
     Enable.prototype.update = function(operators, model, el, options) {
       var operator, result;
