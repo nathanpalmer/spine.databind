@@ -866,7 +866,7 @@ describe("Spine.DataBind", function() {
 
 			it("should change when model is updated", function() {
 				Person.person = false;
-				Person.save();
+				if (!Watch) Person.save();
 
 				var person = $('#person');
 				expect(person.attr('checked')).toBe(undefined);
@@ -888,6 +888,36 @@ describe("Spine.DataBind", function() {
 					}
 				});
 
+				Watch = false;
+				Person = PersonCollection.create({ 
+					firstName: "Nathan", 
+					lastName: "Palmer",
+					person: true
+				});
+
+				Controller = PersonController.init({ el: 'body', model:Person });
+			});
+
+			Tests();
+		});
+
+		describe("with bindings and watch", function() {
+			beforeEach(function() {
+				setFixtures([
+					"<form>",
+						"<input type='checkbox' id='person'/>",
+						"<input type='submit' id='submit'/>",
+					"</form>"
+				].join(""));
+
+				PersonController.include({
+					bindings: {
+						"checked input[type=checkbox]": "person"
+					}
+				});
+				PersonCollection.include(Spine.Watch);
+
+				Watch = true;
 				Person = PersonCollection.create({ 
 					firstName: "Nathan", 
 					lastName: "Palmer",
@@ -909,6 +939,7 @@ describe("Spine.DataBind", function() {
 					"</form>"
 				].join(""));
 
+				Watch = false;
 				Person = PersonCollection.create({ 
 					firstName: "Nathan", 
 					lastName: "Palmer",

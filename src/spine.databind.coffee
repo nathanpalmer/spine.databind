@@ -239,12 +239,18 @@ class Checked extends Template
 
 	bind: (operators,model,el,options) ->
 		el.bind("change", => @change(operators,model,el,options))
-		model.bind("change", => @update(operators,model,el,options))
+
+		if options.watch
+			model.bind("update["+operator.property+"]", => @update([operator],model,el,options)) for operator in operators
+		else
+			model.bind("change", => @update(operators,model,el,options))
+		
 		@update(operators,model,el,options)
 
 	unbind: (operators,model,el,options) ->
 		el.unbind("change")
-		model.unbind("change")
+		eventName = if options.watch "update["+operator.property+"]" else "change"
+		model.unbind(eventName)
 
 	change: (operators,model,el,options) ->
 		operator = operators.filter((e) -> e.name is "checked")[0]
