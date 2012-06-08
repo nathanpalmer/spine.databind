@@ -605,5 +605,8 @@
       return this;
     }
   };
+  if (Spine.Activator) {
+    DataBind.activators = ["refreshBindings"];
+  }
   this.Spine.DataBind = DataBind;
 }).call(this);

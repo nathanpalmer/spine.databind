@@ -395,4 +395,6 @@ DataBind =
 
 		@
 
+DataBind.activators = [ "refreshBindings" ] if Spine.Activator
+
 @Spine.DataBind = DataBind

@@ -2,12 +2,7 @@ describe("Spine.DataBind", function() {
 	var PersonCollection, PersonController, Watch = false;
 
 	beforeEach(function() {
-		PersonCollection = Spine.Model.sub({
-			init: function() {
-				if (Watch) this.prepareWatch();
-			}
-		});
-
+		PersonCollection = Spine.Model.sub();
 		PersonCollection.configure("Person", 
 			"firstName", 
 			"lastName", 
@@ -20,13 +15,7 @@ describe("Spine.DataBind", function() {
 			"homepage"
 		);
 
-		PersonController = Spine.Controller.create({
-			init: function() {
-				//this.refreshBindings(this.model);
-				this.refreshBindings();
-			}
-		});
-
+		PersonController = Spine.Controller.sub();
 		PersonController.include(Spine.DataBind);
 	});
 
@@ -164,6 +153,7 @@ describe("Spine.DataBind", function() {
 
 				Watch = false;
 				Person = PersonCollection.create({ firstName: "Nathan", lastName: "Palmer" });
+				//Controller = new PersonController({ el: 'body', model:Person });
 				Controller = PersonController.init({ el: 'body', model:Person });
 			});
 
