@@ -290,6 +290,8 @@ DataBind =
 	refreshBindings: (model) ->
 		@trigger "destroy-bindings"
 
+		model = this.model if not model
+
 		controller = this
 		splitter = /(\w+)(\\[.*])? (.*)/
 

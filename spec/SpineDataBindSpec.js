@@ -22,7 +22,8 @@ describe("Spine.DataBind", function() {
 
 		PersonController = Spine.Controller.create({
 			init: function() {
-				this.refreshBindings(this.model);
+				//this.refreshBindings(this.model);
+				this.refreshBindings();
 			}
 		});
 

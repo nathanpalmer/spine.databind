@@ -483,6 +483,9 @@
     refreshBindings: function(model) {
       var addElement, controller, element, elements, findBinder, info, init, key, options, parse, property, splitter, trim, _i, _len;
       this.trigger("destroy-bindings");
+      if (!model) {
+        model = this.model;
+      }
       controller = this;
       splitter = /(\w+)(\\[.*])? (.*)/;
       options = {
