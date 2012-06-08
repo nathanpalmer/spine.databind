@@ -345,7 +345,6 @@ describe("Spine.DataBind", function() {
 
 				PersonCollection.include(Spine.Watch);
 				Watch = true;
-
 				Person = PersonCollection.create({ 
 					firstName: "Nathan", 
 					lastName: "Palmer",
@@ -544,13 +543,12 @@ describe("Spine.DataBind", function() {
 
 				setFixtures("<input id='reset' type='button' value='reset'/>");
 
+				Watch = false;
 				Person = PersonCollection.create({ 
 					firstName: "Nathan", 
 					lastName: "Palmer",
 					phoneNumbers: []
 				});
-
-				Watch = false;
 
 				PersonController.include({
 					bindings: {
@@ -579,13 +577,12 @@ describe("Spine.DataBind", function() {
 
 				setFixtures("<input id='reset' type='button' value='reset'/>");
 
+				Watch = true;
 				Person = PersonCollection.create({ 
 					firstName: "Nathan", 
 					lastName: "Palmer",
 					phoneNumbers: []
 				});
-
-				Watch = true;
 
 				PersonController.include({
 					bindings: {
@@ -629,7 +626,6 @@ describe("Spine.DataBind", function() {
 				setFixtures("<input id='reset' type='button' value='reset' data-bind='enable: phoneNumberCount'/>");
 
 				Watch = false;
-
 				Person = PersonCollection.create({ 
 					firstName: "Nathan", 
 					lastName: "Palmer",
@@ -654,7 +650,7 @@ describe("Spine.DataBind", function() {
 
 			it("should display when phone numbers present", function() {
 				Person.phoneNumbers.push("555-555-9090");
-				Person.save();
+				if (!Watch) Person.save();
 
 				var reset = $('#reset');
 				expect(reset.css('display')).toNotBe('none');
@@ -675,13 +671,12 @@ describe("Spine.DataBind", function() {
 
 				setFixtures("<input id='reset' type='button' value='reset'/>");
 
+				Watch = false;
 				Person = PersonCollection.create({ 
 					firstName: "Nathan", 
 					lastName: "Palmer",
 					phoneNumbers: []
 				});
-
-				Watch = false;
 
 				PersonController.include({
 					bindings: {
@@ -693,6 +688,55 @@ describe("Spine.DataBind", function() {
 			});
 
 			Tests();			
+		});
+
+		describe("with bindings and watch", function() {
+			beforeEach(function() {
+				PersonCollection.include({
+					phoneNumberCount: function() {
+						return this.phoneNumbers.length;
+					},
+					reset: function() {
+						this.phoneNumbers = [];
+						this.save();
+					}
+				});
+				PersonCollection.include(Spine.Watch);
+
+				setFixtures("<input id='reset' type='button' value='reset'/>");
+
+				Watch = true;
+				Person = PersonCollection.create({ 
+					firstName: "Nathan", 
+					lastName: "Palmer",
+					phoneNumbers: []
+				});
+
+				PersonController.include({
+					bindings: {
+						"visible input":"phoneNumbers"
+					}
+				});
+
+				Controller = PersonController.init({ el: 'body', model:Person });
+			});
+
+			// These tests are skipped for now because Spine.Watch hasn't
+			// implemented any functionality that will subscribe to events
+			// of dependent fields (in this case the phoneNumbers field)
+			// when called by a function.
+			//Tests();
+
+			it("should start out visible", function() {
+				var reset = $('#reset');
+				expect(reset.css('display')).toNotBe('none');
+			});
+
+			it("should changed to invisible", function() {
+				var reset = $('#reset');
+				Person.phoneNumbers = null;
+				expect(reset.css('display')).toBe('none');
+			});
 		});
 
 		describe("with data-bind", function() {
@@ -709,6 +753,7 @@ describe("Spine.DataBind", function() {
 
 				setFixtures("<input id='reset' type='button' value='reset' data-bind='visible: phoneNumberCount'/>");
 
+				Watch = false;
 				Person = PersonCollection.create({ 
 					firstName: "Nathan", 
 					lastName: "Palmer",
