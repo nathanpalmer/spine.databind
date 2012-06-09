@@ -57,10 +57,18 @@
       return this.update(operators, model, el, options);
     };
     Update.prototype.unbind = function(operators, model, el, options) {
-      var eventName;
+      var operator, _i, _len, _results;
       el.unbind("change");
-      eventName = options.watch("update[" + operator.property + "]") ? void 0 : "update";
-      return model.unbind(eventName);
+      if (options.watch) {
+        _results = [];
+        for (_i = 0, _len = operators.length; _i < _len; _i++) {
+          operator = operators[_i];
+          _results.push(model.unbind("update[" + operator.property + "]"));
+        }
+        return _results;
+      } else {
+        return model.unbind("update");
+      }
     };
     Update.prototype.change = function(operators, model, el, options) {
       var binder;
@@ -322,9 +330,17 @@
       return this.update(operators, model, el, options);
     };
     Enable.prototype.unbind = function(operators, model, el, options) {
-      var eventName;
-      eventName = options.watch("update[" + operator.property + "]") ? void 0 : "update";
-      return model.unbind(eventName);
+      var operator, _i, _len, _results;
+      if (options.watch) {
+        _results = [];
+        for (_i = 0, _len = operators.length; _i < _len; _i++) {
+          operator = operators[_i];
+          _results.push(model.unbind("update[" + operator.property + "]"));
+        }
+        return _results;
+      } else {
+        return model.unbind("update");
+      }
     };
     Enable.prototype.update = function(operators, model, el, options) {
       var operator, result;
@@ -363,9 +379,17 @@
       return this.update(operators, model, el, options);
     };
     Visible.prototype.unbind = function(operators, model, el, options) {
-      var eventName;
-      eventName = options.watch("update[" + operator.property + "]") ? void 0 : "update";
-      return model.unbind(eventName);
+      var operator, _i, _len, _results;
+      if (options.watch) {
+        _results = [];
+        for (_i = 0, _len = operators.length; _i < _len; _i++) {
+          operator = operators[_i];
+          _results.push(model.unbind("update[" + operator.property + "]"));
+        }
+        return _results;
+      } else {
+        return model.unbind("update");
+      }
     };
     Visible.prototype.update = function(operators, model, el, options) {
       var operator, result;
@@ -438,10 +462,18 @@
       return this.update(operators, model, el, options);
     };
     Checked.prototype.unbind = function(operators, model, el, options) {
-      var eventName;
+      var operator, _i, _len, _results;
       el.unbind("change");
-      eventName = options.watch("update[" + operator.property + "]") ? void 0 : "change";
-      return model.unbind(eventName);
+      if (options.watch) {
+        _results = [];
+        for (_i = 0, _len = operators.length; _i < _len; _i++) {
+          operator = operators[_i];
+          _results.push(model.unbind("update[" + operator.property + "]"));
+        }
+        return _results;
+      } else {
+        return model.unbind("change");
+      }
     };
     Checked.prototype.change = function(operators, model, el, options) {
       var operator, value;
@@ -481,7 +513,7 @@
   DataBind = {
     binders: [new Update(), new Options(), new Click(), new Enable(), new Visible(), new Attribute(), new Checked()],
     refreshBindings: function(model) {
-      var addElement, controller, element, elements, findBinder, info, init, key, options, parse, property, splitter, trim, _i, _len;
+      var addElement, bindingElements, controller, element, elements, findBinder, info, init, key, options, parse, property, splitter, trim, _i, _len;
       this.trigger("destroy-bindings");
       if (!model) {
         model = this.model;
@@ -566,6 +598,17 @@
       trim = function(s) {
         return s.replace(/^\s+|\s+$/g, "");
       };
+      bindingElements = function(elements) {
+        return function(property) {
+          return elements.filter(function(element) {
+            return element.operators.some(function(item) {
+              return item.property === property;
+            });
+          }).map(function(result) {
+            return result.el[0];
+          });
+        };
+      };
       elements = [];
       for (key in this.bindings) {
         if (this.bindings.hasOwnProperty(key)) {
@@ -602,6 +645,7 @@
         element = elements[_i];
         init(element);
       }
+      this.bindingElements = bindingElements(elements);
       return this;
     }
   };

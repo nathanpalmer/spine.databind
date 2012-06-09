@@ -30,8 +30,10 @@ class Update extends Template
  
 	unbind: (operators,model,el,options) ->
 		el.unbind("change")
-		eventName = if options.watch "update["+operator.property+"]" else "update"
-		model.unbind(eventName)
+		if options.watch
+			model.unbind("update["+operator.property+"]") for operator in operators
+		else
+			model.unbind("update")
 
 	change: (operators,model,el,options) ->
 		binder = @
@@ -180,8 +182,10 @@ class Enable extends Template
 		@update(operators,model,el,options)
 
 	unbind: (operators,model,el,options) ->
-		eventName = if options.watch "update["+operator.property+"]" else "update"
-		model.unbind(eventName)
+		if options.watch
+			model.unbind("update["+operator.property+"]") for operator in operators
+		else
+			model.unbind("update")
 
 	update: (operators,model,el,options) ->
 		operator = operators.filter((e) -> e.name is "enable")[0]
@@ -203,8 +207,10 @@ class Visible extends Template
 		@update(operators,model,el,options)
 
 	unbind: (operators,model,el,options) ->
-		eventName = if options.watch "update["+operator.property+"]" else "update"
-		model.unbind(eventName)
+		if options.watch
+			model.unbind("update["+operator.property+"]") for operator in operators
+		else
+			model.unbind("update")
 
 	update: (operators,model,el,options) ->
 		operator = operators.filter((e) -> e.name is "visible")[0]
@@ -249,8 +255,10 @@ class Checked extends Template
 
 	unbind: (operators,model,el,options) ->
 		el.unbind("change")
-		eventName = if options.watch "update["+operator.property+"]" else "change"
-		model.unbind(eventName)
+		if options.watch
+			model.unbind("update["+operator.property+"]") for operator in operators
+		else
+			model.unbind("change")
 
 	change: (operators,model,el,options) ->
 		operator = operators.filter((e) -> e.name is "checked")[0]
@@ -363,6 +371,14 @@ DataBind =
 		trim = (s) ->
 			s.replace(/^\s+|\s+$/g,"")
 
+		bindingElements = (elements) ->
+			(property) ->
+				elements.filter (element) ->
+					element.operators.some (item) ->
+						item.property is property
+				.map (result) ->
+					result.el[0]
+
 		elements = []
 
 		for key of @bindings
@@ -392,6 +408,8 @@ DataBind =
 
 		for element in elements
 			init(element)
+
+		@bindingElements = bindingElements(elements)
 
 		@
 
