@@ -129,6 +129,21 @@ describe("Spine.DataBind", function() {
 
 				expect(firstNameInputAttr).toBe("selected");
 			});
+
+			it("ui should reflect model prototype", function() {
+				// First you must set the value in the ui
+				var firstNameInput = $('#firstName');
+				firstNameInput.val('Nathan');
+				firstNameInput.trigger('change');
+
+				// Then pull out the value from the colletion
+				var person = PersonCollection.first();
+				person.firstName = "Eric";
+				if (!Watch) person.save();
+
+				var firstNameInputText = firstNameInput.val();
+				expect(firstNameInputText).toBe("Eric");
+			});
 		};
 
 		describe("with bindings", function() {

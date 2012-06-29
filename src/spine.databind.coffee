@@ -7,7 +7,7 @@ class Template
 		if typeof item[value] is "function"
 			result = item[value]()
 		else
-			result = item[value]
+			result = Object.getPrototypeOf(item)[value]
 		result
 
 	set: (model,property,value,options) ->
