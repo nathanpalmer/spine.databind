@@ -378,19 +378,14 @@
     Visible.prototype.keys = ["visible"];
 
     Visible.prototype.bind = function(operators, model, el, options) {
-      var operator, _i, _len,
-        _this = this;
+      var operator, _i, _len;
       if (options.watch) {
         for (_i = 0, _len = operators.length; _i < _len; _i++) {
           operator = operators[_i];
-          model.bind("update[" + operator.property + "]", function() {
-            return _this.update([operator], model, el, options);
-          });
+          this.init([operator], model, el, options, "update[" + operator.property + "]");
         }
       } else {
-        model.bind("update", function() {
-          return _this.update(operators, model, el, options);
-        });
+        this.init(operators, model, el, options, "update");
       }
       return this.update(operators, model, el, options);
     };

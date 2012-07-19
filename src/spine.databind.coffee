@@ -199,9 +199,10 @@ class Visible extends Template
 
 	bind: (operators,model,el,options) ->
 		if options.watch
-			model.bind("update["+operator.property+"]", => @update([operator],model,el,options)) for operator in operators
+			@init([operator],model,el,options,"update["+operator.property+"]") for operator in operators
 		else
-			model.bind("update", => @update(operators,model,el,options))
+			@init(operators,model,el,options,"update")
+
 		@update(operators,model,el,options)
 
 	unbind: (operators,model,el,options) ->
