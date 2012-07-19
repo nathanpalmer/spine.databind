@@ -246,22 +246,11 @@ class Checked extends Template
 		el.bind("change", => @change(operators,model,el,options))
 
 		if options.watch
-			model.bind("update["+operator.property+"]", binder = => @update([operator],model,el,options)) for operator in operators
-			model.bind("destroy-bindings", (record) =>
-				if record && model.eql(record)
-					model.constructor.unbind("update["+operator.property+"]",binder)
-			)
+			@init([operator],model,el,options,"update["+operator.property+"]") for operator in operators
 		else
-			model.bind("change", => @update(operators,model,el,options))
+			@init(operators,model,el,options,"change")
 		
 		@update(operators,model,el,options)
-
-	unbind: (operators,model,el,options) ->
-		#el.unbind("change")
-		#if options.watch
-		#	model.unbind("update["+operator.property+"]", => @update([operator],model,el,options)) for operator in operators
-		#else
-		#	model.unbind("change")
 
 	change: (operators,model,el,options) ->
 		operator = operators.filter((e) -> e.name is "checked")[0]

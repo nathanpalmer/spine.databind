@@ -470,7 +470,7 @@
     Checked.prototype.keys = ["checked"];
 
     Checked.prototype.bind = function(operators, model, el, options) {
-      var binder, operator, _i, _len,
+      var operator, _i, _len,
         _this = this;
       el.bind("change", function() {
         return _this.change(operators, model, el, options);
@@ -478,24 +478,13 @@
       if (options.watch) {
         for (_i = 0, _len = operators.length; _i < _len; _i++) {
           operator = operators[_i];
-          model.bind("update[" + operator.property + "]", binder = function() {
-            return _this.update([operator], model, el, options);
-          });
+          this.init([operator], model, el, options, "update[" + operator.property + "]");
         }
-        model.bind("destroy-bindings", function(record) {
-          if (record && model.eql(record)) {
-            return model.constructor.unbind("update[" + operator.property + "]", binder);
-          }
-        });
       } else {
-        model.bind("change", function() {
-          return _this.update(operators, model, el, options);
-        });
+        this.init(operators, model, el, options, "change");
       }
       return this.update(operators, model, el, options);
     };
-
-    Checked.prototype.unbind = function(operators, model, el, options) {};
 
     Checked.prototype.change = function(operators, model, el, options) {
       var operator, value;
