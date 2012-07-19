@@ -294,10 +294,6 @@
       });
     };
 
-    Click.prototype.unbind = function(operators, model, el, options) {
-      return el.unbind("click");
-    };
-
     Click.prototype.click = function(operators, model, el, options) {
       var binder, operator, _i, _len, _results;
       binder = this;
@@ -334,20 +330,6 @@
         this.init(operators, model, el, options, "change");
       }
       return this.update(operators, model, el, options);
-    };
-
-    Enable.prototype.unbind = function(operators, model, el, options) {
-      var operator, _i, _len, _results;
-      if (options.watch) {
-        _results = [];
-        for (_i = 0, _len = operators.length; _i < _len; _i++) {
-          operator = operators[_i];
-          _results.push(model.unbind("update[" + operator.property + "]"));
-        }
-        return _results;
-      } else {
-        return model.unbind("update");
-      }
     };
 
     Enable.prototype.update = function(operators, model, el, options) {
@@ -390,20 +372,6 @@
       return this.update(operators, model, el, options);
     };
 
-    Visible.prototype.unbind = function(operators, model, el, options) {
-      var operator, _i, _len, _results;
-      if (options.watch) {
-        _results = [];
-        for (_i = 0, _len = operators.length; _i < _len; _i++) {
-          operator = operators[_i];
-          _results.push(model.unbind("update[" + operator.property + "]"));
-        }
-        return _results;
-      } else {
-        return model.unbind("update");
-      }
-    };
-
     Visible.prototype.update = function(operators, model, el, options) {
       var operator, result;
       operator = operators.filter(function(e) {
@@ -434,10 +402,6 @@
     Attribute.prototype.bind = function(operators, model, el, options) {
       this.init(operators, model, el, options, "update");
       return this.update(operators, model, el, options);
-    };
-
-    Attribute.prototype.unbind = function(operators, model, el, options) {
-      return model.unbind("update");
     };
 
     Attribute.prototype.update = function(operators, model, el, options) {
@@ -529,7 +493,6 @@
     binders: [new Update(), new Options(), new Click(), new Enable(), new Visible(), new Attribute(), new Checked()],
     refreshBindings: function(model) {
       var addElement, bindingElements, controller, element, elements, findBinder, info, init, key, options, parse, property, splitter, trim, _i, _len;
-      this.trigger("destroy-bindings");
       if (!model) {
         model = this.model;
       }

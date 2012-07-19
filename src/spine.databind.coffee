@@ -25,7 +25,6 @@ class Template
 		else
 			model[property] = value
 
-
 class Update extends Template
 	keys: [ "text", "value" ]
 
@@ -160,9 +159,6 @@ class Click extends Template
 	bind: (operators,model,el,options) ->
 		el.bind("click", => @click(operators,model,el,options))
 
-	unbind: (operators,model,el,options) ->
-		el.unbind("click")
-
 	click: (operators,model,el,options) ->
 		binder = @
 		for operator in operators
@@ -178,12 +174,6 @@ class Enable extends Template
 			@init(operators,model,el,options,"change")
 
 		@update(operators,model,el,options)
-
-	unbind: (operators,model,el,options) ->
-		if options.watch
-			model.unbind("update["+operator.property+"]") for operator in operators
-		else
-			model.unbind("update")
 
 	update: (operators,model,el,options) ->
 		operator = operators.filter((e) -> e.name is "enable")[0]
@@ -205,12 +195,6 @@ class Visible extends Template
 
 		@update(operators,model,el,options)
 
-	unbind: (operators,model,el,options) ->
-		if options.watch
-			model.unbind("update["+operator.property+"]") for operator in operators
-		else
-			model.unbind("update")
-
 	update: (operators,model,el,options) ->
 		operator = operators.filter((e) -> e.name is "visible")[0]
 		result = @get(model,operator.property)
@@ -226,9 +210,6 @@ class Attribute extends Template
 	bind: (operators,model,el,options) ->
 		@init(operators,model,el,options,"update")
 		@update(operators,model,el,options)
-
-	unbind: (operators,model,el,options) ->
-		model.unbind("update")
 
 	update: (operators,model,el,options) ->
 		binder = @
@@ -288,8 +269,6 @@ DataBind =
 	]
 
 	refreshBindings: (model) ->
-		@trigger "destroy-bindings"
-
 		model = this.model if not model
 		return if not model
 
@@ -360,9 +339,6 @@ DataBind =
 			element.binder.bind(operators,model,el,options)
 			controller.bind "destroy", ->
 				element.binder.unbind(operators,model,el,options)
-			#controller.bind "destroy-bindings", ->
-			#	element.binder.unbind(operators,model,el,options)
-
 
 		trim = (s) ->
 			s.replace(/^\s+|\s+$/g,"")
