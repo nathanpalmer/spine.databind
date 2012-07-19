@@ -38,37 +38,24 @@
     }
     Update.prototype.keys = ["text", "value"];
     Update.prototype.bind = function(operators, model, el, options) {
-      var operator, _i, _len;
+      var binder, event, operator, unbinder, _i, _len;
       el.bind("change", __bind(function() {
         return this.change(operators, model, el, options);
       }, this));
-      if (options.watch) {
-        for (_i = 0, _len = operators.length; _i < _len; _i++) {
-          operator = operators[_i];
-          model.bind("update[" + operator.property + "]", __bind(function() {
-            return this.update([operator], model, el, options);
-          }, this));
-        }
-      } else {
-        model.bind("change", __bind(function() {
-          return this.update(operators, model, el, options);
+      for (_i = 0, _len = operators.length; _i < _len; _i++) {
+        operator = operators[_i];
+        event = options.watch ? "update[" + operator.property + "]" : "change";
+        model.constructor.bind(event, binder = __bind(function() {
+          return this.update([operator], model, el, options);
+        }, this));
+        model.constructor.bind("destroy-bindings", unbinder = __bind(function(record) {
+          if (record && model.eql(record)) {
+            model.constructor.unbind(event, binder);
+          }
+          return model.constructor.unbind("destroy-bindings", unbinder);
         }, this));
       }
       return this.update(operators, model, el, options);
-    };
-    Update.prototype.unbind = function(operators, model, el, options) {
-      var operator, _i, _len, _results;
-      el.unbind("change");
-      if (options.watch) {
-        _results = [];
-        for (_i = 0, _len = operators.length; _i < _len; _i++) {
-          operator = operators[_i];
-          _results.push(model.unbind("update[" + operator.property + "]"));
-        }
-        return _results;
-      } else {
-        return model.unbind("update");
-      }
     };
     Update.prototype.change = function(operators, model, el, options) {
       var binder;
@@ -135,7 +122,7 @@
     }
     Options.prototype.keys = ["options", "selectedOptions"];
     Options.prototype.bind = function(operators, model, el, options) {
-      var ops, opsSelected;
+      var binder, ops, opsEvent, opsSelected, opsSelectedBinder, opsSelectedEvent, opsSelectedUnbinder, opsUpdateBinder, opsUpdateUnbinder, unbinder;
       if (options.watch) {
         ops = operators.filter(function(e) {
           return e.name === "options";
@@ -143,15 +130,36 @@
         opsSelected = operators.filter(function(e) {
           return e.name === "selectedOptions";
         })[0];
-        model.bind("update[" + ops.property + "]", __bind(function() {
+        opsEvent = "update[" + ops.property + "]";
+        model.constructor.bind(opsEvent, opsUpdateBinder = __bind(function() {
           return this.update([ops, opsSelected], model, el, options);
         }, this));
-        model.bind("update[" + opsSelected.property + "]", __bind(function() {
+        model.constructor.bind("destroy-bindings", opsUpdateUnbinder = __bind(function(record) {
+          if (record && model.eql(record)) {
+            console.log("unbind " + opsEvent);
+            model.constructor.unbind(opsEvent, opsUpdateBinder);
+          }
+          return model.constructor.unbind("destroy-bindings", opsUpdateUnbinder);
+        }, this));
+        opsSelectedEvent = "update[" + opsSelected.property + "]";
+        model.constructor.bind(opsSelectedEvent, opsSelectedBinder = __bind(function() {
           return this.update([ops, opsSelected], model, el, options);
+        }, this));
+        model.constructor.bind("destroy-bindings", opsSelectedUnbinder = __bind(function(record) {
+          if (record && model.eql(record)) {
+            model.constructor.unbind(opsSelectedEvent, opsSelectedBinder);
+          }
+          return model.constructor.unbind("destroy-bindings", opsSelectedUnbinder);
         }, this));
       } else {
-        model.bind("update", __bind(function() {
+        model.constructor.bind("update", binder = __bind(function() {
           return this.update(operators, model, el, options);
+        }, this));
+        model.constructor.bind("destroy-bindings", unbinder = __bind(function(record) {
+          if (record && model.eql(record)) {
+            model.constructor.unbind("update", binder);
+          }
+          return model.constructor.unbind("destroy-bindings", unbinder);
         }, this));
       }
       this.update(operators, model, el, options);
@@ -161,26 +169,6 @@
         return el.bind("change", __bind(function() {
           return this.change(operators, model, el, options);
         }, this));
-      }
-    };
-    Options.prototype.unbind = function(operators, model, el, options) {
-      var ops, opsSelected;
-      if (operators.some(function(e) {
-        return e.name === "selectedOptions";
-      })) {
-        el.unbind("change");
-      }
-      if (options.watch) {
-        ops = operators.filter(function(e) {
-          return e.name === "options";
-        })[0];
-        opsSelected = operators.filter(function(e) {
-          return e.name === "selectedOptions";
-        })[0];
-        model.unbind("update[" + ops.property + "]");
-        return model.unbind("update[" + opsSelected.property + "]");
-      } else {
-        return model.unbind("update");
       }
     };
     Options.prototype.update = function(operators, model, el, options) {
@@ -443,17 +431,22 @@
     }
     Checked.prototype.keys = ["checked"];
     Checked.prototype.bind = function(operators, model, el, options) {
-      var operator, _i, _len;
+      var binder, operator, _i, _len;
       el.bind("change", __bind(function() {
         return this.change(operators, model, el, options);
       }, this));
       if (options.watch) {
         for (_i = 0, _len = operators.length; _i < _len; _i++) {
           operator = operators[_i];
-          model.bind("update[" + operator.property + "]", __bind(function() {
+          model.bind("update[" + operator.property + "]", binder = __bind(function() {
             return this.update([operator], model, el, options);
           }, this));
         }
+        model.bind("destroy-bindings", __bind(function(record) {
+          if (record && model.eql(record)) {
+            return model.constructor.unbind("update[" + operator.property + "]", binder);
+          }
+        }, this));
       } else {
         model.bind("change", __bind(function() {
           return this.update(operators, model, el, options);
@@ -461,20 +454,7 @@
       }
       return this.update(operators, model, el, options);
     };
-    Checked.prototype.unbind = function(operators, model, el, options) {
-      var operator, _i, _len, _results;
-      el.unbind("change");
-      if (options.watch) {
-        _results = [];
-        for (_i = 0, _len = operators.length; _i < _len; _i++) {
-          operator = operators[_i];
-          _results.push(model.unbind("update[" + operator.property + "]"));
-        }
-        return _results;
-      } else {
-        return model.unbind("change");
-      }
-    };
+    Checked.prototype.unbind = function(operators, model, el, options) {};
     Checked.prototype.change = function(operators, model, el, options) {
       var operator, value;
       operator = operators.filter(function(e) {
@@ -518,6 +498,10 @@
       if (!model) {
         model = this.model;
       }
+      if (!model) {
+        return;
+      }
+      model.trigger("destroy-bindings");
       controller = this;
       splitter = /(\w+)(\\[.*])? (.*)/;
       options = {
@@ -588,10 +572,7 @@
         operators = element.operators;
         el = element.el;
         element.binder.bind(operators, model, el, options);
-        controller.bind("destroy", function() {
-          return element.binder.unbind(operators, model, el, options);
-        });
-        return controller.bind("destroy-bindings", function() {
+        return controller.bind("destroy", function() {
           return element.binder.unbind(operators, model, el, options);
         });
       };

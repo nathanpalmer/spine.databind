@@ -22,19 +22,18 @@ class Update extends Template
 
 	bind: (operators,model,el,options) ->
 		el.bind("change", => @change(operators,model,el,options))
-		if options.watch
-			model.bind("update["+operator.property+"]", => @update([operator],model,el,options)) for operator in operators
-		else
-			model.bind("change", => @update(operators,model,el,options))
+		
+		for operator in operators
+			event = if options.watch then "update["+operator.property+"]" else "change"
+			model.constructor.bind(event, binder = () => @update([operator],model,el,options))
+			model.constructor.bind("destroy-bindings", unbinder = (record) =>
+				if record && model.eql(record)
+					model.constructor.unbind(event,binder)
+				model.constructor.unbind("destroy-bindings", unbinder)
+			)
+
 		@update(operators,model,el,options)
  
-	unbind: (operators,model,el,options) ->
-		el.unbind("change")
-		if options.watch
-			model.unbind("update["+operator.property+"]") for operator in operators
-		else
-			model.unbind("update")
-
 	change: (operators,model,el,options) ->
 		binder = @
 		el.each () ->
@@ -79,24 +78,37 @@ class Options extends Template
 		if options.watch
 			ops = operators.filter((e) -> e.name is "options")[0]
 			opsSelected = operators.filter((e) -> e.name is "selectedOptions")[0]
-			model.bind("update["+ops.property+"]", => @update([ops,opsSelected],model,el,options))
-			model.bind("update["+opsSelected.property+"]", => @update([ops,opsSelected],model,el,options))
+			
+			# ops			
+			opsEvent = "update["+ops.property+"]"
+			model.constructor.bind(opsEvent, opsUpdateBinder = () => @update([ops,opsSelected],model,el,options))
+			model.constructor.bind("destroy-bindings", opsUpdateUnbinder = (record) =>
+				if record && model.eql(record)
+					console.log("unbind " + opsEvent)
+					model.constructor.unbind(opsEvent,opsUpdateBinder)
+				model.constructor.unbind("destroy-bindings", opsUpdateUnbinder)
+			)
+
+			# opsSelected
+			opsSelectedEvent = "update["+opsSelected.property+"]"
+			model.constructor.bind(opsSelectedEvent, opsSelectedBinder = () => @update([ops,opsSelected],model,el,options))
+			model.constructor.bind("destroy-bindings", opsSelectedUnbinder = (record) =>
+				if record && model.eql(record)
+					model.constructor.unbind(opsSelectedEvent,opsSelectedBinder)
+				model.constructor.unbind("destroy-bindings", opsSelectedUnbinder)
+			)
 		else
-			model.bind("update", => @update(operators,model,el,options))
+			model.constructor.bind("update", binder = () => @update(operators,model,el,options))
+			model.constructor.bind("destroy-bindings", unbinder = (record) =>
+				if record && model.eql(record)
+					model.constructor.unbind("update",binder)
+				model.constructor.unbind("destroy-bindings", unbinder)
+			)
+
 		@update(operators,model,el,options)
 
 		if operators.some((e) -> e.name is "selectedOptions")
 			el.bind("change", => @change(operators,model,el,options))
-
-	unbind: (operators,model,el,options) ->
-		el.unbind("change") if operators.some((e) -> e.name is "selectedOptions")
-		if options.watch
-			ops = operators.filter((e) -> e.name is "options")[0]
-			opsSelected = operators.filter((e) -> e.name is "selectedOptions")[0]
-			model.unbind("update["+ops.property+"]")
-			model.unbind("update["+opsSelected.property+"]")
-		else
-			model.unbind("update")
 
 	update: (operators,model,el,options) ->
 		ops = operators.filter((e) -> e.name is "options")[0]
@@ -247,18 +259,22 @@ class Checked extends Template
 		el.bind("change", => @change(operators,model,el,options))
 
 		if options.watch
-			model.bind("update["+operator.property+"]", => @update([operator],model,el,options)) for operator in operators
+			model.bind("update["+operator.property+"]", binder = => @update([operator],model,el,options)) for operator in operators
+			model.bind("destroy-bindings", (record) =>
+				if record && model.eql(record)
+					model.constructor.unbind("update["+operator.property+"]",binder)
+			)
 		else
 			model.bind("change", => @update(operators,model,el,options))
 		
 		@update(operators,model,el,options)
 
 	unbind: (operators,model,el,options) ->
-		el.unbind("change")
-		if options.watch
-			model.unbind("update["+operator.property+"]") for operator in operators
-		else
-			model.unbind("change")
+		#el.unbind("change")
+		#if options.watch
+		#	model.unbind("update["+operator.property+"]", => @update([operator],model,el,options)) for operator in operators
+		#else
+		#	model.unbind("change")
 
 	change: (operators,model,el,options) ->
 		operator = operators.filter((e) -> e.name is "checked")[0]
@@ -299,6 +315,9 @@ DataBind =
 		@trigger "destroy-bindings"
 
 		model = this.model if not model
+		return if not model
+
+		model.trigger "destroy-bindings"
 
 		controller = this
 		splitter = /(\w+)(\\[.*])? (.*)/
@@ -365,8 +384,9 @@ DataBind =
 			element.binder.bind(operators,model,el,options)
 			controller.bind "destroy", ->
 				element.binder.unbind(operators,model,el,options)
-			controller.bind "destroy-bindings", ->
-				element.binder.unbind(operators,model,el,options)
+			#controller.bind "destroy-bindings", ->
+			#	element.binder.unbind(operators,model,el,options)
+
 
 		trim = (s) ->
 			s.replace(/^\s+|\s+$/g,"")

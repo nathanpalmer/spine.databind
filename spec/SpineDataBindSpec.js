@@ -144,6 +144,38 @@ describe("Spine.DataBind", function() {
 				var firstNameInputText = firstNameInput.val();
 				expect(firstNameInputText).toBe("Eric");
 			});
+
+			it("should unbind without destroying other bindings", function() {
+				var firstNameDiv = $('#firstNameDiv');
+				var firstNameDivText = firstNameDiv.text();
+				if (Watch) {
+					Person.bind("update[firstName]", function() { console.log("update"); });
+					expect(Person.constructor._callbacks["update[firstName]"].length).toBe(6);
+					Person.trigger("destroy-bindings");
+					expect(Person.constructor._callbacks["update[firstName]"].length).toBe(1);
+				} else {
+					Person.bind("change", function() { console.log("update"); });
+					expect(Person.constructor._callbacks["change"].length).toBe(6);
+					Person.trigger("destroy-bindings");
+					expect(Person.constructor._callbacks["change"].length).toBe(1);
+				}
+			});
+
+			it("should rebind without destroying other bindings", function() {
+				var firstNameDiv = $('#firstNameDiv');
+				var firstNameDivText = firstNameDiv.text();
+				if (Watch) {
+					Person.bind("update[firstName]", function() { console.log("update"); });
+					expect(Person.constructor._callbacks["update[firstName]"].length).toBe(6);
+					Controller.refreshBindings(Person);
+					expect(Person.constructor._callbacks["update[firstName]"].length).toBe(6);
+				} else {
+					Person.bind("change", function() { console.log("update"); });
+					expect(Person.constructor._callbacks["change"].length).toBe(6);
+					Controller.refreshBindings(Person);
+					expect(Person.constructor._callbacks["change"].length).toBe(6);
+				}
+			});
 		};
 
 		describe("with bindings", function() {
@@ -307,6 +339,46 @@ describe("Spine.DataBind", function() {
 				companySelect.find('option[value="0"]').attr("selected", "selected");
 				companySelect.trigger("change");
 				expect(Person.company).toBe("0");
+			});
+
+			it("should unbind without destroying other bindings", function() {
+				var phoneNumberSelect = $('#phoneNumbers');
+				var phoneNumberHtml = [
+					'<option value="555-555-1010">555-555-1010</option>',
+					'<option value="555-101-9999">555-101-9999</option>'
+				].join("");
+
+				if (Watch) {
+					Person.bind("update[phoneNumbers]", function() { console.log("update"); });
+					expect(Person.constructor._callbacks["update[phoneNumbers]"].length).toBe(2);
+					Person.trigger("destroy-bindings");
+					expect(Person.constructor._callbacks["update[phoneNumbers]"].length).toBe(1);
+				} else {
+					Person.bind("update", function() { console.log("update"); });
+					expect(Person.constructor._callbacks["update"].length).toBe(3);
+					Person.trigger("destroy-bindings");
+					expect(Person.constructor._callbacks["update"].length).toBe(1);
+				}
+			});
+
+			it("should rebind without destroying other bindings", function() {
+				var phoneNumberSelect = $('#phoneNumbers');
+				var phoneNumberHtml = [
+					'<option value="555-555-1010">555-555-1010</option>',
+					'<option value="555-101-9999">555-101-9999</option>'
+				].join("");
+
+				if (Watch) {
+					Person.bind("update[phoneNumbers]", function() { console.log("update"); });
+					expect(Person.constructor._callbacks["update[phoneNumbers]"].length).toBe(2);
+					Controller.refreshBindings(Person);
+					expect(Person.constructor._callbacks["update[phoneNumbers]"].length).toBe(2);
+				} else {
+					Person.bind("update", function() { console.log("update"); });
+					expect(Person.constructor._callbacks["update"].length).toBe(3);
+					Controller.refreshBindings(Person);
+					expect(Person.constructor._callbacks["update"].length).toBe(3);
+				}
 			});
 		};
 
