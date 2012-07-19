@@ -604,7 +604,21 @@ describe("Spine.DataBind", function() {
 
 				var reset = $('#reset');
 				expect(reset.attr('disabled')).toBe(undefined);
-			});	
+			});
+
+			it("should unbind without destroying other bindings", function() {
+				Person.bind("change", function() { console.log("update"); });
+				expect(Person.constructor._callbacks["change"].length).toBe(2);
+				Person.trigger("destroy-bindings");
+				expect(Person.constructor._callbacks["change"].length).toBe(1);
+			});
+
+			it("should rebind without destroying other bindings", function() {
+				Person.bind("change", function() { console.log("update"); });
+				expect(Person.constructor._callbacks["change"].length).toBe(2);
+				Controller.refreshBindings(Person);
+				expect(Person.constructor._callbacks["change"].length).toBe(2);
+			});
 		};
 
 		describe("with bindings", function() {

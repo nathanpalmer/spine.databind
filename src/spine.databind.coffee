@@ -1,7 +1,16 @@
 class Template
 	keys: [ ]
+
 	bind: (operators,model,el,options) ->
 	unbind: (operators,model,el,options) ->
+
+	init: (operators,model,el,options,event) ->
+		model.constructor.bind(event, binder = () => @update(operators,model,el,options))
+		model.constructor.bind("destroy-bindings", unbinder = (record) =>
+			if record && model.eql(record)
+				model.constructor.unbind(event,binder)
+			model.constructor.unbind("destroy-bindings", unbinder)
+		)
 
 	get: (item,value) ->
 		if typeof item[value] is "function"
@@ -22,15 +31,11 @@ class Update extends Template
 
 	bind: (operators,model,el,options) ->
 		el.bind("change", => @change(operators,model,el,options))
-		
-		for operator in operators
-			event = if options.watch then "update["+operator.property+"]" else "change"
-			model.constructor.bind(event, binder = () => @update([operator],model,el,options))
-			model.constructor.bind("destroy-bindings", unbinder = (record) =>
-				if record && model.eql(record)
-					model.constructor.unbind(event,binder)
-				model.constructor.unbind("destroy-bindings", unbinder)
-			)
+
+		if options.watch
+			@init([operator],model,el,options,"update["+operator.property+"]") for operator in operators
+		else
+			@init(operators,model,el,options,"change")
 
 		@update(operators,model,el,options)
  
@@ -79,31 +84,11 @@ class Options extends Template
 			ops = operators.filter((e) -> e.name is "options")[0]
 			opsSelected = operators.filter((e) -> e.name is "selectedOptions")[0]
 			
-			# ops			
-			opsEvent = "update["+ops.property+"]"
-			model.constructor.bind(opsEvent, opsUpdateBinder = () => @update([ops,opsSelected],model,el,options))
-			model.constructor.bind("destroy-bindings", opsUpdateUnbinder = (record) =>
-				if record && model.eql(record)
-					console.log("unbind " + opsEvent)
-					model.constructor.unbind(opsEvent,opsUpdateBinder)
-				model.constructor.unbind("destroy-bindings", opsUpdateUnbinder)
-			)
-
-			# opsSelected
-			opsSelectedEvent = "update["+opsSelected.property+"]"
-			model.constructor.bind(opsSelectedEvent, opsSelectedBinder = () => @update([ops,opsSelected],model,el,options))
-			model.constructor.bind("destroy-bindings", opsSelectedUnbinder = (record) =>
-				if record && model.eql(record)
-					model.constructor.unbind(opsSelectedEvent,opsSelectedBinder)
-				model.constructor.unbind("destroy-bindings", opsSelectedUnbinder)
-			)
+			# ops
+			@init([ops,opsSelected],model,el,options,"update["+ops.property+"]")
+			@init([ops,opsSelected],model,el,options,"update["+opsSelected.property+"]")
 		else
-			model.constructor.bind("update", binder = () => @update(operators,model,el,options))
-			model.constructor.bind("destroy-bindings", unbinder = (record) =>
-				if record && model.eql(record)
-					model.constructor.unbind("update",binder)
-				model.constructor.unbind("destroy-bindings", unbinder)
-			)
+			@init(operators,model,el,options,"update")
 
 		@update(operators,model,el,options)
 
@@ -188,9 +173,10 @@ class Enable extends Template
 
 	bind: (operators,model,el,options) ->
 		if options.watch
-			model.bind("update["+operator.property+"]", => @update([operator],model,el,options)) for operator in operators
+			@init([operator],model,el,options,"update["+operator.property+"]") for operator in operators
 		else
-			model.bind("update", => @update(operators,model,el,options))		
+			@init(operators,model,el,options,"change")
+
 		@update(operators,model,el,options)
 
 	unbind: (operators,model,el,options) ->
