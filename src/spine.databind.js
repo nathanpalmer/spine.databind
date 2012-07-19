@@ -432,10 +432,7 @@
     Attribute.prototype.keys = ["attr"];
 
     Attribute.prototype.bind = function(operators, model, el, options) {
-      var _this = this;
-      model.bind("update", function() {
-        return _this.update(operators, model, el, options);
-      });
+      this.init(operators, model, el, options, "update");
       return this.update(operators, model, el, options);
     };
 

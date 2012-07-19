@@ -224,7 +224,7 @@ class Attribute extends Template
 	keys: [ "attr" ]
 
 	bind: (operators,model,el,options) ->
-		model.bind("update", => @update(operators,model,el,options))
+		@init(operators,model,el,options,"update")
 		@update(operators,model,el,options)
 
 	unbind: (operators,model,el,options) ->

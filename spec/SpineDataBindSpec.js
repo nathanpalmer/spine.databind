@@ -895,6 +895,34 @@ describe("Spine.DataBind", function() {
 				var a = $('#homepage');
 				expect(a.attr('href')).toBe('http://www.example.com');
 			});
+
+			it("should unbind without destroying other bindings", function() {
+				if (Watch) {
+					Person.bind("update[homepage]", function() { console.log("update"); });
+					expect(Person.constructor._callbacks["update[homepage]"].length).toBe(2);
+					Person.trigger("destroy-bindings");
+					expect(Person.constructor._callbacks["update[homepage]"].length).toBe(1);
+				} else {
+					Person.bind("update", function() { console.log("update"); });
+					expect(Person.constructor._callbacks["update"].length).toBe(2);
+					Person.trigger("destroy-bindings");
+					expect(Person.constructor._callbacks["update"].length).toBe(1);
+				}
+			});
+
+			it("should rebind without destroying other bindings", function() {
+				if (Watch) {
+					Person.bind("update[homepage]", function() { console.log("update"); });
+					expect(Person.constructor._callbacks["update[homepage]"].length).toBe(2);
+					Controller.refreshBindings(Person);
+					expect(Person.constructor._callbacks["update[homepage]"].length).toBe(2);
+				} else {
+					Person.bind("update", function() { console.log("update"); });
+					expect(Person.constructor._callbacks["update"].length).toBe(2);
+					Controller.refreshBindings(Person);
+					expect(Person.constructor._callbacks["update"].length).toBe(2);
+				}
+			});
 		};
 
 		describe("with bindings", function() {
