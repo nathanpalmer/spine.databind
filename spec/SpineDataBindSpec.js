@@ -133,7 +133,8 @@ describe("Spine.DataBind", function() {
 				expect(firstNameInputAttr).toBe("selected");
 			});
 
-			it("ui should reflect model prototype", function() {
+			// Disabled since we no longer set the prototype
+			xit("ui should reflect model prototype", function() {
 				// First you must set the value in the ui
 				var firstNameInput = $('#firstName');
 				firstNameInput.val('Nathan');

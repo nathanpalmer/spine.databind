@@ -31,7 +31,7 @@
       if (typeof item[value] === "function") {
         result = item[value]();
       } else {
-        result = Object.getPrototypeOf(item)[value];
+        result = item[value];
       }
       return result;
     };
