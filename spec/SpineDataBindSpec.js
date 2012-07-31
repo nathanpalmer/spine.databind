@@ -1,5 +1,5 @@
 describe("Spine.DataBind", function() {
-	var PersonCollection, PersonController, Watch = false;
+	var PersonCollection, PersonController, SecondController, Watch = false;
 
 	beforeEach(function() {
 		PersonCollection = Spine.Model.sub();
@@ -17,6 +17,9 @@ describe("Spine.DataBind", function() {
 
 		PersonController = Spine.Controller.sub();
 		PersonController.include(Spine.DataBind);
+
+		SecondController = Spine.Controller.sub();
+		SecondController.include(Spine.DataBind);
 	});
 
 	describe("Update", function() {
@@ -151,12 +154,12 @@ describe("Spine.DataBind", function() {
 				if (Watch) {
 					Person.bind("update[firstName]", function() { console.log("update"); });
 					expect(Person.constructor._callbacks["update[firstName]"].length).toBe(6);
-					Person.trigger("destroy-bindings");
+					Controller.trigger("destroy-bindings");
 					expect(Person.constructor._callbacks["update[firstName]"].length).toBe(1);
 				} else {
 					Person.bind("change", function() { console.log("update"); });
 					expect(Person.constructor._callbacks["change"].length).toBe(6);
-					Person.trigger("destroy-bindings");
+					Controller.trigger("destroy-bindings");
 					expect(Person.constructor._callbacks["change"].length).toBe(1);
 				}
 			});
@@ -174,6 +177,23 @@ describe("Spine.DataBind", function() {
 					expect(Person.constructor._callbacks["change"].length).toBe(6);
 					Controller.refreshBindings(Person);
 					expect(Person.constructor._callbacks["change"].length).toBe(6);
+				}
+			});
+
+			it("should only destroy current controller bindings", function() {
+				var current;
+				if (Watch) {
+					current = Person.constructor._callbacks["update[firstName]"].length;
+				} else {
+					current = Person.constructor._callbacks["change"].length;
+				}
+
+				anotherController = SecondController.init({ el: 'body', model:Person });
+
+				if (Watch) {
+					expect(Person.constructor._callbacks["update[firstName]"].length).toBe(current+5);
+				} else {
+					expect(Person.constructor._callbacks["change"].length).toBe(current+5);
 				}
 			});
 		};
@@ -198,9 +218,18 @@ describe("Spine.DataBind", function() {
 					}
 				});
 
+				SecondController.include({
+					bindings: {
+						"text #firstNameSpan":"firstName",
+						"text #firstNameDiv":"firstName",
+						"value #firstName":"firstName",
+						"value #firstNameTextArea":"firstName",
+						"value #firstNameSelect":"firstName"
+					}
+				});
+
 				Watch = false;
 				Person = PersonCollection.create({ firstName: "Nathan", lastName: "Palmer" });
-				//Controller = new PersonController({ el: 'body', model:Person });
 				Controller = PersonController.init({ el: 'body', model:Person });
 			});
 
@@ -218,6 +247,16 @@ describe("Spine.DataBind", function() {
 				].join(""));
 
 				PersonController.include({
+					bindings: {
+						"text #firstNameSpan":"firstName",
+						"text #firstNameDiv":"firstName",
+						"value #firstName":"firstName",
+						"value #firstNameTextArea":"firstName",
+						"value #firstNameSelect":"firstName"
+					}
+				});
+
+				SecondController.include({
 					bindings: {
 						"text #firstNameSpan":"firstName",
 						"text #firstNameDiv":"firstName",
@@ -351,12 +390,12 @@ describe("Spine.DataBind", function() {
 				if (Watch) {
 					Person.bind("update[phoneNumbers]", function() { console.log("update"); });
 					expect(Person.constructor._callbacks["update[phoneNumbers]"].length).toBe(2);
-					Person.trigger("destroy-bindings");
+					Controller.trigger("destroy-bindings");
 					expect(Person.constructor._callbacks["update[phoneNumbers]"].length).toBe(1);
 				} else {
 					Person.bind("update", function() { console.log("update"); });
 					expect(Person.constructor._callbacks["update"].length).toBe(3);
-					Person.trigger("destroy-bindings");
+					Controller.trigger("destroy-bindings");
 					expect(Person.constructor._callbacks["update"].length).toBe(1);
 				}
 			});
@@ -609,7 +648,7 @@ describe("Spine.DataBind", function() {
 			it("should unbind without destroying other bindings", function() {
 				Person.bind("change", function() { console.log("update"); });
 				expect(Person.constructor._callbacks["change"].length).toBe(2);
-				Person.trigger("destroy-bindings");
+				Controller.trigger("destroy-bindings");
 				expect(Person.constructor._callbacks["change"].length).toBe(1);
 			});
 
@@ -752,12 +791,12 @@ describe("Spine.DataBind", function() {
 				if (Watch) {
 					Person.bind("update[phoneNumberCount]", function() { console.log("update"); });
 					expect(Person.constructor._callbacks["update[phoneNumberCount]"].length).toBe(2);
-					Person.trigger("destroy-bindings");
+					Controller.trigger("destroy-bindings");
 					expect(Person.constructor._callbacks["update[phoneNumberCount]"].length).toBe(1);
 				} else {
 					Person.bind("update", function() { console.log("update"); });
 					expect(Person.constructor._callbacks["update"].length).toBe(2);
-					Person.trigger("destroy-bindings");
+					Controller.trigger("destroy-bindings");
 					expect(Person.constructor._callbacks["update"].length).toBe(1);
 				}
 			});
@@ -900,12 +939,12 @@ describe("Spine.DataBind", function() {
 				if (Watch) {
 					Person.bind("update[homepage]", function() { console.log("update"); });
 					expect(Person.constructor._callbacks["update[homepage]"].length).toBe(2);
-					Person.trigger("destroy-bindings");
+					Controller.trigger("destroy-bindings");
 					expect(Person.constructor._callbacks["update[homepage]"].length).toBe(1);
 				} else {
 					Person.bind("update", function() { console.log("update"); });
 					expect(Person.constructor._callbacks["update"].length).toBe(2);
-					Person.trigger("destroy-bindings");
+					Controller.trigger("destroy-bindings");
 					expect(Person.constructor._callbacks["update"].length).toBe(1);
 				}
 			});

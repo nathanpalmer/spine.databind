@@ -10,21 +10,19 @@
 
     Template.prototype.keys = [];
 
-    Template.prototype.bind = function(operators, model, el, options) {};
+    Template.prototype.bind = function(operators, model, controller, el, options) {};
 
-    Template.prototype.unbind = function(operators, model, el, options) {};
+    Template.prototype.unbind = function(operators, model, controller, el, options) {};
 
-    Template.prototype.init = function(operators, model, el, options, event) {
+    Template.prototype.init = function(operators, model, controller, el, options, event) {
       var binder, unbinder,
         _this = this;
       model.constructor.bind(event, binder = function() {
-        return _this.update(operators, model, el, options);
+        return _this.update(operators, model, controller, el, options);
       });
-      return model.constructor.bind("destroy-bindings", unbinder = function(record) {
-        if (record && model.eql(record)) {
-          model.constructor.unbind(event, binder);
-        }
-        return model.constructor.unbind("destroy-bindings", unbinder);
+      return controller.bind("destroy-bindings", unbinder = function(record) {
+        model.constructor.unbind(event, binder);
+        return controller.unbind("destroy-bindings", unbinder);
       });
     };
 
@@ -60,24 +58,24 @@
 
     Update.prototype.keys = ["text", "value"];
 
-    Update.prototype.bind = function(operators, model, el, options) {
+    Update.prototype.bind = function(operators, model, controller, el, options) {
       var operator, _i, _len,
         _this = this;
       el.bind("change", function() {
-        return _this.change(operators, model, el, options);
+        return _this.change(operators, model, controller, el, options);
       });
       if (options.watch) {
         for (_i = 0, _len = operators.length; _i < _len; _i++) {
           operator = operators[_i];
-          this.init([operator], model, el, options, "update[" + operator.property + "]");
+          this.init([operator], model, controller, el, options, "update[" + operator.property + "]");
         }
       } else {
-        this.init(operators, model, el, options, "change");
+        this.init(operators, model, controller, el, options, "change");
       }
-      return this.update(operators, model, el, options);
+      return this.update(operators, model, controller, el, options);
     };
 
-    Update.prototype.change = function(operators, model, el, options) {
+    Update.prototype.change = function(operators, model, controller, el, options) {
       var binder;
       binder = this;
       el.each(function() {
@@ -100,7 +98,7 @@
       return this;
     };
 
-    Update.prototype.update = function(operators, model, el, options) {
+    Update.prototype.update = function(operators, model, controller, el, options) {
       var binder;
       binder = this;
       el.each(function() {
@@ -149,7 +147,7 @@
 
     Options.prototype.keys = ["options", "selectedOptions"];
 
-    Options.prototype.bind = function(operators, model, el, options) {
+    Options.prototype.bind = function(operators, model, controller, el, options) {
       var ops, opsSelected,
         _this = this;
       if (options.watch) {
@@ -159,22 +157,22 @@
         opsSelected = operators.filter(function(e) {
           return e.name === "selectedOptions";
         })[0];
-        this.init([ops, opsSelected], model, el, options, "update[" + ops.property + "]");
-        this.init([ops, opsSelected], model, el, options, "update[" + opsSelected.property + "]");
+        this.init([ops, opsSelected], model, controller, el, options, "update[" + ops.property + "]");
+        this.init([ops, opsSelected], model, controller, el, options, "update[" + opsSelected.property + "]");
       } else {
-        this.init(operators, model, el, options, "update");
+        this.init(operators, model, controller, el, options, "update");
       }
-      this.update(operators, model, el, options);
+      this.update(operators, model, controller, el, options);
       if (operators.some(function(e) {
         return e.name === "selectedOptions";
       })) {
         return el.bind("change", function() {
-          return _this.change(operators, model, el, options);
+          return _this.change(operators, model, controller, el, options);
         });
       }
     };
 
-    Options.prototype.update = function(operators, model, el, options) {
+    Options.prototype.update = function(operators, model, controller, el, options) {
       var array, index, item, ops, opsSelected, option, result, selected, selectedOptions, _i, _j, _len, _ref, _ref1, _results,
         _this = this;
       ops = operators.filter(function(e) {
@@ -251,7 +249,7 @@
       }
     };
 
-    Options.prototype.change = function(operators, model, el, options) {
+    Options.prototype.change = function(operators, model, controller, el, options) {
       var items, operator;
       operator = operators.filter(function(e) {
         return e.name === "selectedOptions";
@@ -287,14 +285,14 @@
 
     Click.prototype.keys = ["click"];
 
-    Click.prototype.bind = function(operators, model, el, options) {
+    Click.prototype.bind = function(operators, model, controller, el, options) {
       var _this = this;
       return el.bind("click", function() {
-        return _this.click(operators, model, el, options);
+        return _this.click(operators, model, controller, el, options);
       });
     };
 
-    Click.prototype.click = function(operators, model, el, options) {
+    Click.prototype.click = function(operators, model, controller, el, options) {
       var binder, operator, _i, _len, _results;
       binder = this;
       _results = [];
@@ -319,20 +317,20 @@
 
     Enable.prototype.keys = ["enable"];
 
-    Enable.prototype.bind = function(operators, model, el, options) {
+    Enable.prototype.bind = function(operators, model, controller, el, options) {
       var operator, _i, _len;
       if (options.watch) {
         for (_i = 0, _len = operators.length; _i < _len; _i++) {
           operator = operators[_i];
-          this.init([operator], model, el, options, "update[" + operator.property + "]");
+          this.init([operator], model, controller, el, options, "update[" + operator.property + "]");
         }
       } else {
-        this.init(operators, model, el, options, "change");
+        this.init(operators, model, controller, el, options, "change");
       }
-      return this.update(operators, model, el, options);
+      return this.update(operators, model, controller, el, options);
     };
 
-    Enable.prototype.update = function(operators, model, el, options) {
+    Enable.prototype.update = function(operators, model, controller, el, options) {
       var operator, result;
       operator = operators.filter(function(e) {
         return e.name === "enable";
@@ -359,20 +357,20 @@
 
     Visible.prototype.keys = ["visible"];
 
-    Visible.prototype.bind = function(operators, model, el, options) {
+    Visible.prototype.bind = function(operators, model, controller, el, options) {
       var operator, _i, _len;
       if (options.watch) {
         for (_i = 0, _len = operators.length; _i < _len; _i++) {
           operator = operators[_i];
-          this.init([operator], model, el, options, "update[" + operator.property + "]");
+          this.init([operator], model, controller, el, options, "update[" + operator.property + "]");
         }
       } else {
-        this.init(operators, model, el, options, "update");
+        this.init(operators, model, controller, el, options, "update");
       }
-      return this.update(operators, model, el, options);
+      return this.update(operators, model, controller, el, options);
     };
 
-    Visible.prototype.update = function(operators, model, el, options) {
+    Visible.prototype.update = function(operators, model, controller, el, options) {
       var operator, result;
       operator = operators.filter(function(e) {
         return e.name === "visible";
@@ -399,12 +397,12 @@
 
     Attribute.prototype.keys = ["attr"];
 
-    Attribute.prototype.bind = function(operators, model, el, options) {
-      this.init(operators, model, el, options, "update");
-      return this.update(operators, model, el, options);
+    Attribute.prototype.bind = function(operators, model, controller, el, options) {
+      this.init(operators, model, controller, el, options, "update");
+      return this.update(operators, model, controller, el, options);
     };
 
-    Attribute.prototype.update = function(operators, model, el, options) {
+    Attribute.prototype.update = function(operators, model, controller, el, options) {
       var binder, json, operator, property, value;
       binder = this;
       operator = operators.filter(function(e) {
@@ -433,24 +431,24 @@
 
     Checked.prototype.keys = ["checked"];
 
-    Checked.prototype.bind = function(operators, model, el, options) {
+    Checked.prototype.bind = function(operators, model, controller, el, options) {
       var operator, _i, _len,
         _this = this;
       el.bind("change", function() {
-        return _this.change(operators, model, el, options);
+        return _this.change(operators, model, controller, el, options);
       });
       if (options.watch) {
         for (_i = 0, _len = operators.length; _i < _len; _i++) {
           operator = operators[_i];
-          this.init([operator], model, el, options, "update[" + operator.property + "]");
+          this.init([operator], model, controller, el, options, "update[" + operator.property + "]");
         }
       } else {
-        this.init(operators, model, el, options, "change");
+        this.init(operators, model, controller, el, options, "change");
       }
-      return this.update(operators, model, el, options);
+      return this.update(operators, model, controller, el, options);
     };
 
-    Checked.prototype.change = function(operators, model, el, options) {
+    Checked.prototype.change = function(operators, model, controller, el, options) {
       var operator, value;
       operator = operators.filter(function(e) {
         return e.name === "checked";
@@ -463,7 +461,7 @@
       }
     };
 
-    Checked.prototype.update = function(operators, model, el, options) {
+    Checked.prototype.update = function(operators, model, controller, el, options) {
       var operator, result, value;
       operator = operators.filter(function(e) {
         return e.name === "checked";
@@ -499,8 +497,8 @@
       if (!model) {
         return;
       }
-      model.trigger("destroy-bindings");
       controller = this;
+      controller.trigger("destroy-bindings");
       splitter = /(\w+)(\\[.*])? (.*)/;
       options = {
         save: model.watchEnabled ? false : true,
@@ -569,9 +567,9 @@
         var el, operators;
         operators = element.operators;
         el = element.el;
-        element.binder.bind(operators, model, el, options);
+        element.binder.bind(operators, model, controller, el, options);
         return controller.bind("destroy", function() {
-          return element.binder.unbind(operators, model, el, options);
+          return element.binder.unbind(operators, model, controller, el, options);
         });
       };
       trim = function(s) {
