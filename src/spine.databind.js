@@ -119,9 +119,9 @@
               e.find("option[value=" + value + "]").attr("selected", "selected");
               break;
             default:
-              if (typeof value === "object" && value.constructor === Array) {
+              if (typeof value === "object" && value && value.constructor === Array) {
                 e.text(value.join(","));
-              } else if (typeof value === "object") {
+              } else if (typeof value === "object" && value) {
                 e.text(value.toString());
               } else {
                 e.text(value);

@@ -67,9 +67,9 @@ class Update extends Template
 						# Select
 						e.find("option[value=#{value}]").attr("selected","selected")
 					else
-						if typeof value is "object" and value.constructor is Array
+						if typeof value is "object" and value and value.constructor is Array
 							e.text(value.join(","))
-						else if typeof value is "object"
+						else if typeof value is "object" and value
 							e.text(value.toString())
 						else
 							e.text(value)
