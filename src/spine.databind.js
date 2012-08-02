@@ -470,15 +470,27 @@
       value = el.val();
       if (el.attr("type") === "radio") {
         if (result === value) {
-          return el.attr("checked", "checked");
+          if (!el.is(":checked")) {
+            el.attr("checked", "checked");
+            return el.trigger("change");
+          }
         } else {
-          return el.removeAttr("checked");
+          if (!el.is(":checked")) {
+            el.removeAttr("checked");
+            return el.trigger("change");
+          }
         }
       } else {
-        if (!result) {
-          return el.removeAttr("checked");
+        if (result) {
+          if (!el.is(":checked")) {
+            el.attr("checked", "checked");
+            return el.trigger("change");
+          }
         } else {
-          return el.attr("checked", "checked");
+          if (el.is(":checked")) {
+            el.removeAttr("checked");
+            return el.trigger("change");
+          }
         }
       }
     };

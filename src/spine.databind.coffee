@@ -249,14 +249,22 @@ class Checked extends Template
 
 		if el.attr("type") is "radio"
 			if result is value
-				el.attr("checked", "checked")
-			else
-				el.removeAttr("checked")
+				if not el.is(":checked")
+					el.attr("checked", "checked")
+					el.trigger("change")
+			else 
+				if not el.is(":checked")
+					el.removeAttr("checked")
+					el.trigger("change")
 		else
-			if not result
-				el.removeAttr("checked")
+			if result 
+				if not el.is(":checked")
+					el.attr("checked", "checked")
+					el.trigger("change")
 			else
-				el.attr("checked", "checked")
+				if el.is(":checked")
+					el.removeAttr("checked")
+					el.trigger("change")
 	
 DataBind =
 	binders: [ 
