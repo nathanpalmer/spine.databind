@@ -63,8 +63,8 @@ class Update extends Template
 				switch @tagName
 					when "INPUT", "TEXTAREA"
 						if e.val() isnt value
-							e.trigger("change") 
 							e.val(value)
+							e.trigger("change") 
 					when "SELECT"
 						# Deselect
 						e.find("option[selected]").each((key,element) -> $(element).removeAttr("selected"))

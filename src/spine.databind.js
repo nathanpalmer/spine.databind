@@ -114,8 +114,8 @@
             case "INPUT":
             case "TEXTAREA":
               if (e.val() !== value) {
-                e.trigger("change");
                 e.val(value);
+                e.trigger("change");
               }
               break;
             case "SELECT":
