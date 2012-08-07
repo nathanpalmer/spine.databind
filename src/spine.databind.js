@@ -37,6 +37,9 @@
     };
 
     Template.prototype.set = function(model, property, value, options) {
+      if (typeof model[property] === "function") {
+        return;
+      }
       if (!options || options.save) {
         return model.updateAttribute(property, value);
       } else {
@@ -110,7 +113,10 @@
           switch (this.tagName) {
             case "INPUT":
             case "TEXTAREA":
-              e.val(value);
+              if (e.val() !== value) {
+                e.trigger("change");
+                e.val(value);
+              }
               break;
             case "SELECT":
               e.find("option[selected]").each(function(key, element) {
@@ -162,18 +168,18 @@
       } else {
         this.init(operators, model, controller, el, options, "update");
       }
-      this.update(operators, model, controller, el, options);
       if (operators.some(function(e) {
         return e.name === "selectedOptions";
       })) {
-        return el.bind("change", function() {
+        el.bind("change", function() {
           return _this.change(operators, model, controller, el, options);
         });
       }
+      return this.update(operators, model, controller, el, options);
     };
 
     Options.prototype.update = function(operators, model, controller, el, options) {
-      var array, index, item, ops, opsSelected, option, result, selected, selectedOptions, _i, _j, _len, _ref, _ref1, _results,
+      var array, changed, index, item, ops, opsSelected, option, result, selected, selectedOptions, _i, _j, _len, _ref, _ref1, _results,
         _this = this;
       ops = operators.filter(function(e) {
         return e.name === "options";
@@ -216,10 +222,15 @@
           }
         });
       }
+      changed = false;
       for (index = _i = 0, _len = result.length; _i < _len; index = ++_i) {
         item = result[index];
         option = options.length > index ? $(options[index]) : null;
-        selected = selectedOptions.indexOf(item.value) >= 0 ? "selected='selected'" : "";
+        if ((!isNaN(item.value - 0) && selectedOptions.indexOf(item.value - 0) >= 0) || selectedOptions.indexOf(item.value) >= 0) {
+          selected = "selected='selected'";
+        } else {
+          selected = "";
+        }
         if (option === null) {
           el.append("<option value='" + item.value + "' " + selected + ">" + item.text + "</option>");
         } else {
@@ -232,13 +243,18 @@
           if (option.attr("selected") === "selected" || option.attr("selected") === true) {
             if (selected.length === 0) {
               option.removeAttr("selected");
+              changed = true;
             }
           } else {
             if (selected.length > 0) {
               option.attr("selected", "selected");
+              changed = true;
             }
           }
         }
+      }
+      if (changed) {
+        el.trigger("change");
       }
       if (options.length > array.length) {
         _results = [];

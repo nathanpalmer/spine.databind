@@ -16,11 +16,13 @@ class Template
 		if typeof item[value] is "function"
 			result = item[value]()
 		else
-			#result = Object.getPrototypeOf(item)[value]
 			result = item[value]
 		result
 
 	set: (model,property,value,options) ->
+		# Functions are read-only
+		return if typeof model[property] is "function"
+
 		if !options or options.save
 			model.updateAttribute(property,value)
 		else
@@ -60,7 +62,9 @@ class Update extends Template
 				value = binder.get(model,operator.property)
 				switch @tagName
 					when "INPUT", "TEXTAREA"
-						e.val(value)
+						if e.val() isnt value
+							e.trigger("change") 
+							e.val(value)
 					when "SELECT"
 						# Deselect
 						e.find("option[selected]").each((key,element) -> $(element).removeAttr("selected"))
@@ -73,6 +77,7 @@ class Update extends Template
 							e.text(value.toString())
 						else
 							e.text(value)
+				
 			@
 		@
 
@@ -90,10 +95,10 @@ class Options extends Template
 		else
 			@init(operators,model,controller,el,options,"update")
 
-		@update(operators,model,controller,el,options)
-
 		if operators.some((e) -> e.name is "selectedOptions")
 			el.bind("change", => @change(operators,model,controller,el,options))
+
+		@update(operators,model,controller,el,options)
 
 	update: (operators,model,controller,el,options) ->
 		ops = operators.filter((e) -> e.name is "options")[0]
@@ -118,9 +123,14 @@ class Options extends Template
 		                   			return a.text.localeCompare(b.text)
 		                   	)
 
+		changed = false
 		for item,index in result
 			option = if options.length > index then $(options[index]) else null
-			selected = if selectedOptions.indexOf(item.value) >= 0 then "selected='selected'" else ""
+			if (!isNaN(item.value-0) and selectedOptions.indexOf((item.value-0)) >= 0) or
+			   selectedOptions.indexOf(item.value) >= 0
+				selected = "selected='selected'"
+			else
+				selected = ""
 
 			if option is null
 				el.append "<option value='#{item.value}' #{selected}>#{item.text}</option>"
@@ -128,9 +138,15 @@ class Options extends Template
 				option.text(item.text) if option.text() isnt item.text
 				option.val(item.value) if option.val?() isnt item.value
 				if option.attr("selected") is "selected" or option.attr("selected") is true
-					option.removeAttr("selected") if selected.length is 0
+					if selected.length is 0
+						option.removeAttr("selected")
+						changed = true
 				else
-					option.attr("selected","selected") if selected.length > 0
+					if selected.length > 0
+						option.attr("selected","selected")
+						changed = true
+
+		el.trigger("change") if changed
 					
 		if options.length > array.length
 			for index in [array.length..options.length]
