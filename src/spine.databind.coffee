@@ -121,7 +121,10 @@ class Options extends Template
 			                   			return a.text.localeCompare(b.text)
 			                   	)
 
+			count = 0
+			count = count = count + 1 for own property of result
 			changed = false
+
 			for item,index in result
 				option = if options.length > index then $(options[index]) else null
 				if (!isNaN(item.value-0) and selectedOptions.indexOf((item.value-0)) >= 0) or
@@ -145,11 +148,12 @@ class Options extends Template
 							option.attr("selected","selected")
 							changed = true
 
-			el.trigger("change") if changed
-						
-			if options.length > array.length
-				for index in [array.length..options.length]
+			if options.length > count
+				for index in [count..options.length]
 					$(options[index]).remove()
+					changed = true
+
+			el.trigger("change") if changed						
 
 		selectedOptions = if opsSelected.length is 1 then @get(model,opsSelected[0].property) else [] 
 		selectedOptions = [selectedOptions] if not (selectedOptions instanceof Array)

@@ -187,7 +187,7 @@
         return e.name === "selectedOptions";
       });
       process = function(array) {
-        var changed, index, item, option, result, selected, _i, _j, _len, _ref, _ref1, _results,
+        var changed, count, index, item, option, property, result, selected, _i, _j, _len, _ref,
           _this = this;
         options = el.children('option');
         if (array instanceof Array) {
@@ -218,6 +218,11 @@
               return a.text.localeCompare(b.text);
             }
           });
+        }
+        count = 0;
+        for (property in result) {
+          if (!__hasProp.call(result, property)) continue;
+          count = count = count + 1;
         }
         changed = false;
         for (index = _i = 0, _len = result.length; _i < _len; index = ++_i) {
@@ -251,15 +256,14 @@
             }
           }
         }
-        if (changed) {
-          el.trigger("change");
-        }
-        if (options.length > array.length) {
-          _results = [];
-          for (index = _j = _ref = array.length, _ref1 = options.length; _ref <= _ref1 ? _j <= _ref1 : _j >= _ref1; index = _ref <= _ref1 ? ++_j : --_j) {
-            _results.push($(options[index]).remove());
+        if (options.length > count) {
+          for (index = _j = count, _ref = options.length; count <= _ref ? _j <= _ref : _j >= _ref; index = count <= _ref ? ++_j : --_j) {
+            $(options[index]).remove();
+            changed = true;
           }
-          return _results;
+        }
+        if (changed) {
+          return el.trigger("change");
         }
       };
       selectedOptions = opsSelected.length === 1 ? this.get(model, opsSelected[0].property) : [];
