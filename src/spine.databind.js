@@ -420,7 +420,19 @@
     Attribute.prototype.keys = ["attr"];
 
     Attribute.prototype.bind = function(operators, model, controller, el, options) {
-      this.init(operators, model, controller, el, options, "update");
+      var json, operator, property, _i, _len;
+      if (options.watch) {
+        for (_i = 0, _len = operators.length; _i < _len; _i++) {
+          operator = operators[_i];
+          json = JSON.parse(operator.property);
+          for (property in json) {
+            if (!__hasProp.call(json, property)) continue;
+            this.init([operator], model, controller, el, options, "update[" + json[property] + "]");
+          }
+        }
+      } else {
+        this.init(operators, model, controller, el, options, "update");
+      }
       return this.update(operators, model, controller, el, options);
     };
 
@@ -434,7 +446,10 @@
       for (property in json) {
         if (!__hasProp.call(json, property)) continue;
         value = binder.get(model, json[property]);
-        el.attr(property, value);
+        if (el.attr(property) !== value) {
+          el.attr(property, value);
+          el.trigger("change");
+        }
       }
       return this;
     };

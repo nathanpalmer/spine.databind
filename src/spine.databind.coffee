@@ -231,7 +231,14 @@ class Attribute extends Template
 	keys: [ "attr" ]
 
 	bind: (operators,model,controller,el,options) ->
-		@init(operators,model,controller,el,options,"update")
+		if options.watch
+			for operator in operators
+				json = JSON.parse(operator.property)
+				for own property of json
+					@init([operator],model,controller,el,options,"update["+json[property]+"]") 
+		else
+			@init(operators,model,controller,el,options,"update")
+
 		@update(operators,model,controller,el,options)
 
 	update: (operators,model,controller,el,options) ->
@@ -240,7 +247,9 @@ class Attribute extends Template
 		json = JSON.parse(operator.property)
 		for own property of json
 			value = binder.get(model,json[property])
-			el.attr(property,value)
+			if el.attr(property) isnt value
+				el.attr(property,value)
+				el.trigger("change")
 		@
 
 class Checked extends Template
