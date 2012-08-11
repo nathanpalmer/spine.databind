@@ -1152,14 +1152,25 @@ describe("Spine.DataBind", function() {
 				expect(mrs.attr('checked')).toBe(undefined);
 			});
 
-			it("should change model when changed on radio", function() {
+			it("should change radio when changed on model", function() {
 				Person.title = "Mrs";
-				Person.save();
+				if (!Watch) Person.save();
 
 				var mr = $('#mr');
 				var mrs = $('#mrs');
 				expect(mr.attr('checked')).toBe(undefined);
 				expect(mrs.attr('checked')).toBe('checked');
+			});
+
+			it("should change model when changed on radio", function() {
+				var mr = $('#mr');
+				var mrs = $('#mrs');
+
+				mrs.attr("checked","checked")
+				mr.removeAttr("checked")
+				$("input[type=radio]").trigger("change")
+	
+				expect(Person.title).toBe("Mrs");
 			});
 		};
 
@@ -1199,6 +1210,36 @@ describe("Spine.DataBind", function() {
 						"checked input[type=radio]": "title"
 					}
 				});
+
+				Person = PersonCollection.create({ 
+					firstName: "Nathan", 
+					lastName: "Palmer",
+					title: "Mr"
+				});
+
+				Controller = PersonController.init({ el: 'body', model:Person });
+			});
+
+			Tests();
+		});
+
+		describe("with bindings and watch", function() {
+			beforeEach(function() {
+				setFixtures([
+					"<form>",
+						"<input type='radio' name='title' value='Mr' id='mr'/>",
+						"<input type='radio' name='title' value='Mrs' id='mrs'/>",
+					"</form>"
+				].join(""));
+
+				PersonController.include({
+					bindings: {
+						"checked input[type=radio]": "title"
+					}
+				});
+
+				Watch = true;
+				PersonCollection.include(Spine.Watch);
 
 				Person = PersonCollection.create({ 
 					firstName: "Nathan", 

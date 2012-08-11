@@ -174,7 +174,7 @@ class Options extends Template
 			if items.length is 1
 				newValue = items[0]
 
-		@set(model, operator.property, newValue)
+		@set(model, operator.property, newValue, options)
 
 class Click extends Template
 	keys: [ "click" ]
@@ -263,6 +263,8 @@ class Checked extends Template
 		if el.attr("type") is "radio"
 			if el.length > 1
 				current = $($.grep(el, (item) -> $(item).is(":checked"))).val()
+				current = true if current == "true"
+				current = false if current == "false"
 				if value isnt current
 					@set(model,operator.property,current,options)
 			else
@@ -281,6 +283,8 @@ class Checked extends Template
 		el.each () ->
 			e = $(@)
 			value = e.val()
+			value = true if value == "true"
+			value = false if value == "false"
 
 			if e.attr("type") is "radio"
 				if result is value

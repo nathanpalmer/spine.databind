@@ -290,7 +290,7 @@
           newValue = items[0];
         }
       }
-      return this.set(model, operator.property, newValue);
+      return this.set(model, operator.property, newValue, options);
     };
 
     return Options;
@@ -481,6 +481,12 @@
           current = $($.grep(el, function(item) {
             return $(item).is(":checked");
           })).val();
+          if (current === "true") {
+            current = true;
+          }
+          if (current === "false") {
+            current = false;
+          }
           if (value !== current) {
             return this.set(model, operator.property, current, options);
           }
@@ -508,6 +514,12 @@
         var e, value;
         e = $(this);
         value = e.val();
+        if (value === "true") {
+          value = true;
+        }
+        if (value === "false") {
+          value = false;
+        }
         if (e.attr("type") === "radio") {
           if (result === value) {
             if (!e.is(":checked")) {
