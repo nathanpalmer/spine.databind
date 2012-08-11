@@ -12,9 +12,9 @@ class Template
 			controller.unbind("destroy-bindings", unbinder)
 		)
 
-	get: (item,value) ->
+	get: (item,value,callback) ->
 		if typeof item[value] is "function"
-			result = item[value]()
+			result = item[value](callback)
 		else
 			result = item[value]
 		result
@@ -103,54 +103,59 @@ class Options extends Template
 	update: (operators,model,controller,el,options) ->
 		ops = operators.filter((e) -> e.name is "options")[0]
 		opsSelected = operators.filter((e) -> e.name is "selectedOptions")
+
+		process = (array) ->
+			options = el.children('option')
+
+			if array instanceof Array
+				result = ({ text: item, value: item} for item in array)
+			else
+			    result = Object.keys(array)
+			                   .map((r) => { text: array[r], value: r })
+			                   .sort((a,b) => 
+			                   		if (b.value == "")
+			                   			return 1
+			                   		else if (a.value == "")
+			                   			return -1
+			                   		else
+			                   			return a.text.localeCompare(b.text)
+			                   	)
+
+			changed = false
+			for item,index in result
+				option = if options.length > index then $(options[index]) else null
+				if (!isNaN(item.value-0) and selectedOptions.indexOf((item.value-0)) >= 0) or
+				   selectedOptions.indexOf(item.value) >= 0
+					selected = "selected='selected'"
+				else
+					selected = ""
+
+				if option is null
+					el.append "<option value='#{item.value}' #{selected}>#{item.text}</option>"
+					changed = true
+				else
+					option.text(item.text) if option.text() isnt item.text
+					option.val(item.value) if option.val?() isnt item.value
+					if option.attr("selected") is "selected" or option.attr("selected") is true
+						if selected.length is 0
+							option.removeAttr("selected")
+							changed = true
+					else
+						if selected.length > 0
+							option.attr("selected","selected")
+							changed = true
+
+			el.trigger("change") if changed
+						
+			if options.length > array.length
+				for index in [array.length..options.length]
+					$(options[index]).remove()
+
 		selectedOptions = if opsSelected.length is 1 then @get(model,opsSelected[0].property) else [] 
 		selectedOptions = [selectedOptions] if not (selectedOptions instanceof Array)
-			
-		array = if ops then @get(model,ops.property) or [] else []
-		options = el.children('option')
+		array = if ops then @get(model,ops.property,process) or [] else []
 
-		if array instanceof Array
-			result = ({ text: item, value: item} for item in array)
-		else
-		    result = Object.keys(array)
-		                   .map((r) => { text: array[r], value: r })
-		                   .sort((a,b) => 
-		                   		if (b.value == "")
-		                   			return 1
-		                   		else if (a.value == "")
-		                   			return -1
-		                   		else
-		                   			return a.text.localeCompare(b.text)
-		                   	)
-
-		changed = false
-		for item,index in result
-			option = if options.length > index then $(options[index]) else null
-			if (!isNaN(item.value-0) and selectedOptions.indexOf((item.value-0)) >= 0) or
-			   selectedOptions.indexOf(item.value) >= 0
-				selected = "selected='selected'"
-			else
-				selected = ""
-
-			if option is null
-				el.append "<option value='#{item.value}' #{selected}>#{item.text}</option>"
-			else
-				option.text(item.text) if option.text() isnt item.text
-				option.val(item.value) if option.val?() isnt item.value
-				if option.attr("selected") is "selected" or option.attr("selected") is true
-					if selected.length is 0
-						option.removeAttr("selected")
-						changed = true
-				else
-					if selected.length > 0
-						option.attr("selected","selected")
-						changed = true
-
-		el.trigger("change") if changed
-					
-		if options.length > array.length
-			for index in [array.length..options.length]
-				$(options[index]).remove()
+		process(array) if typeof array isnt "function"
 
 	change: (operators,model,controller,el,options) ->
 		operator = operators.filter((e) -> e.name is "selectedOptions")[0]
@@ -160,15 +165,16 @@ class Options extends Template
 			items.push($(this).val())
 		)
 
-		if model[operator.property] instanceof Array or items.length > 1
-			model[operator.property] = []
-			model[operator.property] = model[operator.property].concat(items)
+		value = @get(model,operator.property)
+
+		if value instanceof Array or items.length > 1
+			newValue = []
+			newValue = newValue.concat(items)
 		else
 			if items.length is 1
-				model[operator.property] = items[0]
+				newValue = items[0]
 
-		if !options || options.save
-			model.save()
+		@set(model, operator.property, newValue)
 
 class Click extends Template
 	keys: [ "click" ]
@@ -252,36 +258,52 @@ class Checked extends Template
 
 	change: (operators,model,controller,el,options) ->
 		operator = operators.filter((e) -> e.name is "checked")[0]
+		value = @get(model,operator.property)
+
 		if el.attr("type") is "radio"
-			@set(model,operator.property,el.val(),options)
+			if el.length > 1
+				current = $($.grep(el, (item) -> $(item).is(":checked"))).val()
+				if value isnt current
+					@set(model,operator.property,current,options)
+			else
+				if el.is(":checked")
+					@set(model,operator.property,el.val(),options)
 		else
-			value = el.is(":checked")
-			@set(model,operator.property,value,options)
+			if value isnt el.is(":checked")
+				value = el.is(":checked")
+				@set(model,operator.property,value,options)
 
 	update: (operators,model,controller,el,options) ->
 		operator = operators.filter((e) -> e.name is "checked")[0]
 		result = @get(model,operator.property)
-		value = el.val()
+		changed = false
+		
+		el.each () ->
+			e = $(@)
+			value = e.val()
 
-		if el.attr("type") is "radio"
-			if result is value
-				if not el.is(":checked")
-					el.attr("checked", "checked")
-					el.trigger("change")
-			else 
-				if not el.is(":checked")
-					el.removeAttr("checked")
-					el.trigger("change")
-		else
-			if result 
-				if not el.is(":checked")
-					el.attr("checked", "checked")
-					el.trigger("change")
+			if e.attr("type") is "radio"
+				if result is value
+					if not e.is(":checked")
+						e.attr("checked", "checked")
+						changed = true
+						
+				else 
+					if e.is(":checked")
+						e.removeAttr("checked")
+						changed = true
 			else
-				if el.is(":checked")
-					el.removeAttr("checked")
-					el.trigger("change")
+				if result 
+					if not e.is(":checked")
+						e.attr("checked", "checked")
+						changed = true
+				else
+					if e.is(":checked")
+						e.removeAttr("checked")
+						changed = true
 	
+		el.trigger("change") if changed
+
 DataBind =
 	binders: [ 
 		new Update()
