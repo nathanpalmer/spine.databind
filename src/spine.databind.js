@@ -14,14 +14,32 @@
 
     Template.prototype.unbind = function(operators, model, controller, el, options) {};
 
-    Template.prototype.init = function(operators, model, controller, el, options, event) {
+    Template.prototype.bindToModel = function(operators, model, controller, el, options, event) {
       var binder, unbinder,
         _this = this;
+      if (event == null) {
+        event = "update";
+      }
       model.constructor.bind(event, binder = function() {
         return _this.update(operators, model, controller, el, options);
       });
       return controller.bind("destroy-bindings", unbinder = function(record) {
         model.constructor.unbind(event, binder);
+        return controller.unbind("destroy-bindings", unbinder);
+      });
+    };
+
+    Template.prototype.bindToElement = function(operators, model, controller, el, options, event) {
+      var binder, unbinder,
+        _this = this;
+      if (event == null) {
+        event = "change";
+      }
+      el.bind(event + ".spine-databind", binder = function() {
+        return _this.change(operators, model, controller, el, options);
+      });
+      return controller.bind("destroy-bindings", unbinder = function(record) {
+        el.unbind(event + ".spine-databind", binder);
         return controller.unbind("destroy-bindings", unbinder);
       });
     };
@@ -62,18 +80,15 @@
     Update.prototype.keys = ["text", "value"];
 
     Update.prototype.bind = function(operators, model, controller, el, options) {
-      var operator, _i, _len,
-        _this = this;
-      el.bind("change", function() {
-        return _this.change(operators, model, controller, el, options);
-      });
+      var operator, _i, _len;
+      this.bindToElement(operators, model, controller, el, options);
       if (options.watch) {
         for (_i = 0, _len = operators.length; _i < _len; _i++) {
           operator = operators[_i];
-          this.init([operator], model, controller, el, options, "update[" + operator.property + "]");
+          this.bindToModel([operator], model, controller, el, options, "update[" + operator.property + "]");
         }
       } else {
-        this.init(operators, model, controller, el, options, "change");
+        this.bindToModel(operators, model, controller, el, options, "change");
       }
       return this.update(operators, model, controller, el, options);
     };
@@ -154,8 +169,7 @@
     Options.prototype.keys = ["options", "selectedOptions"];
 
     Options.prototype.bind = function(operators, model, controller, el, options) {
-      var ops, opsSelected, together,
-        _this = this;
+      var ops, opsSelected, together;
       if (options.watch) {
         ops = operators.filter(function(e) {
           return e.name === "options";
@@ -165,20 +179,18 @@
         });
         together = ops.concat(opsSelected);
         if (ops && ops.length === 1) {
-          this.init(together, model, controller, el, options, "update[" + ops[0].property + "]");
+          this.bindToModel(together, model, controller, el, options, "update[" + ops[0].property + "]");
         }
         if (opsSelected && opsSelected.length === 1) {
-          this.init(together, model, controller, el, options, "update[" + opsSelected[0].property + "]");
+          this.bindToModel(together, model, controller, el, options, "update[" + opsSelected[0].property + "]");
         }
       } else {
-        this.init(operators, model, controller, el, options, "update");
+        this.bindToModel(operators, model, controller, el, options, "update");
       }
       if (operators.some(function(e) {
         return e.name === "selectedOptions";
       })) {
-        el.bind("change", function() {
-          return _this.change(operators, model, controller, el, options);
-        });
+        this.bindToElement(operators, model, controller, el, options);
       }
       return this.update(operators, model, controller, el, options);
     };
@@ -324,13 +336,10 @@
     Click.prototype.keys = ["click"];
 
     Click.prototype.bind = function(operators, model, controller, el, options) {
-      var _this = this;
-      return el.bind("click", function() {
-        return _this.click(operators, model, controller, el, options);
-      });
+      return this.bindToElement(operators, model, controller, el, options, "click");
     };
 
-    Click.prototype.click = function(operators, model, controller, el, options) {
+    Click.prototype.change = function(operators, model, controller, el, options) {
       var binder, operator, _i, _len, _results;
       binder = this;
       _results = [];
@@ -360,10 +369,10 @@
       if (options.watch) {
         for (_i = 0, _len = operators.length; _i < _len; _i++) {
           operator = operators[_i];
-          this.init([operator], model, controller, el, options, "update[" + operator.property + "]");
+          this.bindToModel([operator], model, controller, el, options, "update[" + operator.property + "]");
         }
       } else {
-        this.init(operators, model, controller, el, options, "change");
+        this.bindToModel(operators, model, controller, el, options, "change");
       }
       return this.update(operators, model, controller, el, options);
     };
@@ -400,10 +409,10 @@
       if (options.watch) {
         for (_i = 0, _len = operators.length; _i < _len; _i++) {
           operator = operators[_i];
-          this.init([operator], model, controller, el, options, "update[" + operator.property + "]");
+          this.bindToModel([operator], model, controller, el, options, "update[" + operator.property + "]");
         }
       } else {
-        this.init(operators, model, controller, el, options, "update");
+        this.bindToModel(operators, model, controller, el, options, "update");
       }
       return this.update(operators, model, controller, el, options);
     };
@@ -443,11 +452,11 @@
           json = JSON.parse(operator.property);
           for (property in json) {
             if (!__hasProp.call(json, property)) continue;
-            this.init([operator], model, controller, el, options, "update[" + json[property] + "]");
+            this.bindToModel([operator], model, controller, el, options, "update[" + json[property] + "]");
           }
         }
       } else {
-        this.init(operators, model, controller, el, options, "update");
+        this.bindToModel(operators, model, controller, el, options, "update");
       }
       return this.update(operators, model, controller, el, options);
     };
@@ -485,18 +494,15 @@
     Checked.prototype.keys = ["checked"];
 
     Checked.prototype.bind = function(operators, model, controller, el, options) {
-      var operator, _i, _len,
-        _this = this;
-      el.bind("change", function() {
-        return _this.change(operators, model, controller, el, options);
-      });
+      var operator, _i, _len;
+      this.bindToElement(operators, model, controller, el, options);
       if (options.watch) {
         for (_i = 0, _len = operators.length; _i < _len; _i++) {
           operator = operators[_i];
-          this.init([operator], model, controller, el, options, "update[" + operator.property + "]");
+          this.bindToModel([operator], model, controller, el, options, "update[" + operator.property + "]");
         }
       } else {
-        this.init(operators, model, controller, el, options, "change");
+        this.bindToModel(operators, model, controller, el, options, "change");
       }
       return this.update(operators, model, controller, el, options);
     };
@@ -589,7 +595,7 @@
   DataBind = {
     binders: [new Update(), new Options(), new Click(), new Enable(), new Visible(), new Attribute(), new Checked()],
     refreshBindings: function(model) {
-      var addElement, bindingElements, controller, element, elements, findBinder, info, init, key, options, parse, property, splitter, trim, _i, _len;
+      var addElement, bindToModel, bindingElements, controller, element, elements, findBinder, info, key, options, parse, property, splitter, trim, _i, _len;
       if (!model) {
         model = this.model;
       }
@@ -662,7 +668,7 @@
           element: selector
         };
       };
-      init = function(element) {
+      bindToModel = function(element) {
         var el, operators;
         operators = element.operators;
         el = element.el;
@@ -719,7 +725,7 @@
       });
       for (_i = 0, _len = elements.length; _i < _len; _i++) {
         element = elements[_i];
-        init(element);
+        bindToModel(element);
       }
       this.bindingElements = bindingElements(elements);
       return this;

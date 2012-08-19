@@ -4,11 +4,18 @@ class Template
 	bind: (operators,model,controller,el,options) ->
 	unbind: (operators,model,controller,el,options) ->
 
-	init: (operators,model,controller,el,options,event) ->
+	bindToModel: (operators,model,controller,el,options,event = "update") ->
 		model.constructor.bind(event, binder = () => @update(operators,model,controller,el,options))
 		controller.bind("destroy-bindings", unbinder = (record) =>
 			#if record && model.eql(record)
 			model.constructor.unbind(event,binder)
+			controller.unbind("destroy-bindings", unbinder)
+		)
+
+	bindToElement: (operators,model,controller,el,options,event = "change") ->
+		el.bind(event+".spine-databind", binder = () => @change(operators,model,controller,el,options))
+		controller.bind("destroy-bindings", unbinder = (record) =>
+			el.unbind(event+".spine-databind", binder)
 			controller.unbind("destroy-bindings", unbinder)
 		)
 
@@ -32,12 +39,12 @@ class Update extends Template
 	keys: [ "text", "value" ]
 
 	bind: (operators,model,controller,el,options) ->
-		el.bind("change", => @change(operators,model,controller,el,options))
+		@bindToElement(operators,model,controller,el,options)
 
 		if options.watch
-			@init([operator],model,controller,el,options,"update["+operator.property+"]") for operator in operators
+			@bindToModel([operator],model,controller,el,options,"update["+operator.property+"]") for operator in operators
 		else
-			@init(operators,model,controller,el,options,"change")
+			@bindToModel(operators,model,controller,el,options,"change")
 
 		@update(operators,model,controller,el,options)
  
@@ -91,13 +98,13 @@ class Options extends Template
 			together = ops.concat(opsSelected)
 			
 			# ops
-			@init(together,model,controller,el,options,"update["+ops[0].property+"]") if ops and ops.length is 1
-			@init(together,model,controller,el,options,"update["+opsSelected[0].property+"]") if opsSelected and opsSelected.length is 1
+			@bindToModel(together,model,controller,el,options,"update["+ops[0].property+"]") if ops and ops.length is 1
+			@bindToModel(together,model,controller,el,options,"update["+opsSelected[0].property+"]") if opsSelected and opsSelected.length is 1
 		else
-			@init(operators,model,controller,el,options,"update")
+			@bindToModel(operators,model,controller,el,options,"update")
 
 		if operators.some((e) -> e.name is "selectedOptions")
-			el.bind("change", => @change(operators,model,controller,el,options))
+			@bindToElement(operators,model,controller,el,options)
 
 		@update(operators,model,controller,el,options)
 
@@ -187,9 +194,9 @@ class Click extends Template
 	keys: [ "click" ]
 
 	bind: (operators,model,controller,el,options) ->
-		el.bind("click", => @click(operators,model,controller,el,options))
+		@bindToElement(operators,model,controller,el,options,"click")
 
-	click: (operators,model,controller,el,options) ->
+	change: (operators,model,controller,el,options) ->
 		binder = @
 		for operator in operators
 			binder.get(model,operator.property)
@@ -199,9 +206,9 @@ class Enable extends Template
 
 	bind: (operators,model,controller,el,options) ->
 		if options.watch
-			@init([operator],model,controller,el,options,"update["+operator.property+"]") for operator in operators
+			@bindToModel([operator],model,controller,el,options,"update["+operator.property+"]") for operator in operators
 		else
-			@init(operators,model,controller,el,options,"change")
+			@bindToModel(operators,model,controller,el,options,"change")
 
 		@update(operators,model,controller,el,options)
 
@@ -219,9 +226,9 @@ class Visible extends Template
 
 	bind: (operators,model,controller,el,options) ->
 		if options.watch
-			@init([operator],model,controller,el,options,"update["+operator.property+"]") for operator in operators
+			@bindToModel([operator],model,controller,el,options,"update["+operator.property+"]") for operator in operators
 		else
-			@init(operators,model,controller,el,options,"update")
+			@bindToModel(operators,model,controller,el,options,"update")
 
 		@update(operators,model,controller,el,options)
 
@@ -242,9 +249,9 @@ class Attribute extends Template
 			for operator in operators
 				json = JSON.parse(operator.property)
 				for own property of json
-					@init([operator],model,controller,el,options,"update["+json[property]+"]") 
+					@bindToModel([operator],model,controller,el,options,"update["+json[property]+"]") 
 		else
-			@init(operators,model,controller,el,options,"update")
+			@bindToModel(operators,model,controller,el,options,"update")
 
 		@update(operators,model,controller,el,options)
 
@@ -263,12 +270,12 @@ class Checked extends Template
 	keys: [ "checked" ]
 
 	bind: (operators,model,controller,el,options) ->
-		el.bind("change", => @change(operators,model,controller,el,options))
+		@bindToElement(operators,model,controller,el,options)
 
 		if options.watch
-			@init([operator],model,controller,el,options,"update["+operator.property+"]") for operator in operators
+			@bindToModel([operator],model,controller,el,options,"update["+operator.property+"]") for operator in operators
 		else
-			@init(operators,model,controller,el,options,"change")
+			@bindToModel(operators,model,controller,el,options,"change")
 		
 		@update(operators,model,controller,el,options)
 
@@ -399,7 +406,7 @@ DataBind =
 				element: selector
 			}
 
-		init = (element) ->
+		bindToModel = (element) ->
 			operators = element.operators
 			el = element.el
 
@@ -446,7 +453,7 @@ DataBind =
 				addElement(elements,info,info.value)
 
 		for element in elements
-			init(element)
+			bindToModel(element)
 
 		@bindingElements = bindingElements(elements)
 

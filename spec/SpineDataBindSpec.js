@@ -197,6 +197,30 @@ describe("Spine.DataBind", function() {
 					expect(Person.constructor._callbacks["change"].length).toBe(current+5);
 				}
 			});
+
+			it("should bind element to change", function() {
+				binder = Controller.binders[0];
+				spyOn(binder, "change");
+
+				var firstNameInput = $('#firstName');
+				firstNameInput.val("Eric");
+				firstNameInput.trigger("change");
+
+				expect(binder.change).toHaveBeenCalled();
+			});
+
+			it("should unbind element when destroyed", function() {
+				binder = Controller.binders[0];
+				spyOn(binder, "change");
+
+				Controller.trigger("destroy-bindings");
+
+				var firstNameInput = $('#firstName');
+				firstNameInput.val("Eric");
+				firstNameInput.trigger("change");
+
+				expect(binder.change).not.toHaveBeenCalled();
+			});
 		};
 
 		describe("with bindings", function() {
@@ -420,6 +444,30 @@ describe("Spine.DataBind", function() {
 					expect(Person.constructor._callbacks["update"].length).toBe(3);
 				}
 			});
+
+			it("should bind element to change", function() {
+				binder = Controller.binders[1];
+				spyOn(binder, "change");
+
+				var phoneNumberSelect = $('#phoneNumbers');
+				phoneNumberSelect.find("option[value='555-101-9999']").attr("selected", "selected");
+				phoneNumberSelect.trigger("change");
+
+				expect(binder.change).toHaveBeenCalled();
+			});
+
+			it("should unbind element when destroyed", function() {
+				binder = Controller.binders[1];
+				spyOn(binder, "change");
+
+				Controller.trigger("destroy-bindings");
+
+				var phoneNumberSelect = $('#phoneNumbers');
+				phoneNumberSelect.find("option[value='555-101-9999']").attr("selected", "selected");
+				phoneNumberSelect.trigger("change");
+
+				expect(binder.change).not.toHaveBeenCalled();
+			});
 		};
 
 		describe("with bindings", function() {
@@ -574,6 +622,26 @@ describe("Spine.DataBind", function() {
 				$('#reset').click();
 
 				expect(Person.firstName).toBe("Reset");
+			});
+
+			it("should bind element to click", function() {
+				binder = Controller.binders[2];
+				spyOn(binder, "change");
+
+				$('#reset').click();
+
+				expect(binder.change).toHaveBeenCalled();
+			});
+
+			it("should unbind element when destroyed", function() {
+				binder = Controller.binders[2];
+				spyOn(binder, "change");
+
+				Controller.trigger("destroy-bindings");
+
+				$('#reset').click();
+
+				expect(binder.change).not.toHaveBeenCalled();
 			});
 		};
 
@@ -1051,12 +1119,44 @@ describe("Spine.DataBind", function() {
 				expect(person.attr('checked')).toBe('checked');
 			});
 
-			it("should change model when changed on checkbox", function() {
+			it("should change element when model is updated", function() {
 				Person.person = false;
 				if (!Watch) Person.save();
 
 				var person = $('#person');
 				expect(person.attr('checked')).toBe(undefined);
+			});
+
+			it("should change model element is checked", function() {
+				var person = $('#person');
+				person.attr("checked",false);
+				person.trigger("change");
+
+				expect(Person.person).toBe(false);
+			});
+
+			it("should bind element to change", function() {
+				binder = Controller.binders[6];
+				spyOn(binder, "change");
+
+				var person = $('#person');
+				person.attr("checked",false);
+				person.trigger("change");
+
+				expect(binder.change).toHaveBeenCalled();
+			});
+
+			it("should unbind element when destroyed", function() {
+				binder = Controller.binders[6];
+				spyOn(binder, "change");
+
+				Controller.trigger("destroy-bindings");
+
+				var person = $('#person');
+				person.attr("checked",false);
+				person.trigger("change");
+
+				expect(binder.change).not.toHaveBeenCalled();
 			});
 		};
 
