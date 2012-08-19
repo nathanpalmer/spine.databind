@@ -86,12 +86,13 @@ class Options extends Template
 
 	bind: (operators,model,controller,el,options) ->
 		if options.watch
-			ops = operators.filter((e) -> e.name is "options")[0]
-			opsSelected = operators.filter((e) -> e.name is "selectedOptions")[0]
+			ops = operators.filter((e) -> e.name is "options")
+			opsSelected = operators.filter((e) -> e.name is "selectedOptions")
+			together = ops.concat(opsSelected)
 			
 			# ops
-			@init([ops,opsSelected],model,controller,el,options,"update["+ops.property+"]")
-			@init([ops,opsSelected],model,controller,el,options,"update["+opsSelected.property+"]")
+			@init(together,model,controller,el,options,"update["+ops[0].property+"]") if ops and ops.length is 1
+			@init(together,model,controller,el,options,"update["+opsSelected[0].property+"]") if opsSelected and opsSelected.length is 1
 		else
 			@init(operators,model,controller,el,options,"update")
 
@@ -101,13 +102,17 @@ class Options extends Template
 		@update(operators,model,controller,el,options)
 
 	update: (operators,model,controller,el,options) ->
-		ops = operators.filter((e) -> e.name is "options")[0]
+		ops = operators.filter((e) -> e.name is "options")
 		opsSelected = operators.filter((e) -> e.name is "selectedOptions")
+		selectedOptions = if opsSelected.length is 1 then @get(model,opsSelected[0].property) else [] 
+		selectedOptions = [selectedOptions] if not (selectedOptions instanceof Array)
 
 		process = (array) ->
 			options = el.children('option')
 
-			if array instanceof Array
+			if not array
+				result = el.find("option").map((index,item) -> return { text: $(item).text(), value: $(item).val() })
+			else if array instanceof Array
 				result = ({ text: item, value: item} for item in array)
 			else
 			    result = Object.keys(array)
@@ -122,7 +127,7 @@ class Options extends Template
 			                   	)
 
 			count = 0
-			count = count = count + 1 for own property of result
+			count = count = count + 1 for own property in result
 			changed = false
 
 			for item,index in result
@@ -155,9 +160,7 @@ class Options extends Template
 
 			el.trigger("change") if changed						
 
-		selectedOptions = if opsSelected.length is 1 then @get(model,opsSelected[0].property) else [] 
-		selectedOptions = [selectedOptions] if not (selectedOptions instanceof Array)
-		array = if ops then @get(model,ops.property,process) or [] else []
+		array = if ops.length is 1 then @get(model,ops[0].property,process) else null
 
 		process(array) if typeof array isnt "function"
 

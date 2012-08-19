@@ -562,7 +562,6 @@ describe("Spine.DataBind", function() {
 
 			Tests();
 		});
-
 	});
 
 	describe("Click", function() {
@@ -1252,6 +1251,5 @@ describe("Spine.DataBind", function() {
 
 			Tests();
 		});
-
 	});
 });

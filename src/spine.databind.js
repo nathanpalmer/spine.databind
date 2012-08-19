@@ -154,17 +154,22 @@
     Options.prototype.keys = ["options", "selectedOptions"];
 
     Options.prototype.bind = function(operators, model, controller, el, options) {
-      var ops, opsSelected,
+      var ops, opsSelected, together,
         _this = this;
       if (options.watch) {
         ops = operators.filter(function(e) {
           return e.name === "options";
-        })[0];
+        });
         opsSelected = operators.filter(function(e) {
           return e.name === "selectedOptions";
-        })[0];
-        this.init([ops, opsSelected], model, controller, el, options, "update[" + ops.property + "]");
-        this.init([ops, opsSelected], model, controller, el, options, "update[" + opsSelected.property + "]");
+        });
+        together = ops.concat(opsSelected);
+        if (ops && ops.length === 1) {
+          this.init(together, model, controller, el, options, "update[" + ops[0].property + "]");
+        }
+        if (opsSelected && opsSelected.length === 1) {
+          this.init(together, model, controller, el, options, "update[" + opsSelected[0].property + "]");
+        }
       } else {
         this.init(operators, model, controller, el, options, "update");
       }
@@ -182,15 +187,26 @@
       var array, ops, opsSelected, process, selectedOptions;
       ops = operators.filter(function(e) {
         return e.name === "options";
-      })[0];
+      });
       opsSelected = operators.filter(function(e) {
         return e.name === "selectedOptions";
       });
+      selectedOptions = opsSelected.length === 1 ? this.get(model, opsSelected[0].property) : [];
+      if (!(selectedOptions instanceof Array)) {
+        selectedOptions = [selectedOptions];
+      }
       process = function(array) {
-        var changed, count, index, item, option, property, result, selected, _i, _j, _len, _ref,
+        var changed, count, index, item, option, property, result, selected, _i, _j, _k, _len, _len1, _ref,
           _this = this;
         options = el.children('option');
-        if (array instanceof Array) {
+        if (!array) {
+          result = el.find("option").map(function(index, item) {
+            return {
+              text: $(item).text(),
+              value: $(item).val()
+            };
+          });
+        } else if (array instanceof Array) {
           result = (function() {
             var _i, _len, _results;
             _results = [];
@@ -220,12 +236,12 @@
           });
         }
         count = 0;
-        for (property in result) {
-          if (!__hasProp.call(result, property)) continue;
+        for (_i = 0, _len = result.length; _i < _len; _i++) {
+          property = result[_i];
           count = count = count + 1;
         }
         changed = false;
-        for (index = _i = 0, _len = result.length; _i < _len; index = ++_i) {
+        for (index = _j = 0, _len1 = result.length; _j < _len1; index = ++_j) {
           item = result[index];
           option = options.length > index ? $(options[index]) : null;
           if ((!isNaN(item.value - 0) && selectedOptions.indexOf(item.value - 0) >= 0) || selectedOptions.indexOf(item.value) >= 0) {
@@ -257,7 +273,7 @@
           }
         }
         if (options.length > count) {
-          for (index = _j = count, _ref = options.length; count <= _ref ? _j <= _ref : _j >= _ref; index = count <= _ref ? ++_j : --_j) {
+          for (index = _k = count, _ref = options.length; count <= _ref ? _k <= _ref : _k >= _ref; index = count <= _ref ? ++_k : --_k) {
             $(options[index]).remove();
             changed = true;
           }
@@ -266,11 +282,7 @@
           return el.trigger("change");
         }
       };
-      selectedOptions = opsSelected.length === 1 ? this.get(model, opsSelected[0].property) : [];
-      if (!(selectedOptions instanceof Array)) {
-        selectedOptions = [selectedOptions];
-      }
-      array = ops ? this.get(model, ops.property, process) || [] : [];
+      array = ops.length === 1 ? this.get(model, ops[0].property, process) : null;
       if (typeof array !== "function") {
         return process(array);
       }
