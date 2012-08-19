@@ -1,3 +1,6 @@
+Spine      = @Spine
+Controller = Spine.Controller
+
 class Template
 	keys: [ ]
 
@@ -463,5 +466,8 @@ DataBind =
 		@trigger("destroy-bindings")
 
 DataBind.activators = [ "refreshBindings" ] if Spine.Activator
+
+Controller.DataBind = {}
+Controller.DataBind.Template = Template
 
 @Spine.DataBind = DataBind
