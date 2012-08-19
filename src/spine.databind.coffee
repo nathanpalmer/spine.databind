@@ -347,7 +347,7 @@ DataBind =
 		return if not model
 
 		controller = this
-		controller.trigger "destroy-bindings"
+		controller.destroyBindings()
 
 		splitter = /(\w+)(\\[.*])? (.*)/
 
@@ -411,7 +411,7 @@ DataBind =
 			el = element.el
 
 			element.binder.bind(operators,model,controller,el,options)
-			controller.bind "destroy", ->
+			controller.bind "release", ->
 				element.binder.unbind(operators,model,controller,el,options)
 
 		trim = (s) ->
@@ -458,6 +458,9 @@ DataBind =
 		@bindingElements = bindingElements(elements)
 
 		@
+
+	destroyBindings: ->
+		@trigger("destroy-bindings")
 
 DataBind.activators = [ "refreshBindings" ] if Spine.Activator
 

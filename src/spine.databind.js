@@ -603,7 +603,7 @@
         return;
       }
       controller = this;
-      controller.trigger("destroy-bindings");
+      controller.destroyBindings();
       splitter = /(\w+)(\\[.*])? (.*)/;
       options = {
         save: model.watchEnabled ? false : true,
@@ -673,7 +673,7 @@
         operators = element.operators;
         el = element.el;
         element.binder.bind(operators, model, controller, el, options);
-        return controller.bind("destroy", function() {
+        return controller.bind("release", function() {
           return element.binder.unbind(operators, model, controller, el, options);
         });
       };
@@ -729,6 +729,9 @@
       }
       this.bindingElements = bindingElements(elements);
       return this;
+    },
+    destroyBindings: function() {
+      return this.trigger("destroy-bindings");
     }
   };
 
