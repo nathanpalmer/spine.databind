@@ -1352,4 +1352,122 @@ describe("Spine.DataBind", function() {
 			Tests();
 		});
 	});
+
+	describe("Hash", function() {
+		var Tests = function() {
+			it("should set hash when model changes", function() {
+				Person.firstName = "Eric";
+				Person.lastName = ""
+				Person.phoneNumbers = undefined;
+				if (!Watch) Person.save();
+
+				expect(window.location.hash).toBe("#firstName=Eric");
+			});
+
+			it("should set model when hash changes", function() {
+				window.location.hash = "#firstName=Eric";
+				$(window).trigger("hashchange");
+
+				expect(Person.firstName).toBe("Eric");
+			});
+
+			it("does not need to have the same target name as property", function() {
+				window.location.hash = "#last=Bender";
+				$(window).trigger("hashchange");
+
+				expect(Person.lastName).toBe("Bender");
+			});
+
+			it("should bind multiple values to an array", function() {
+				window.location.hash = "#numbers=801-442-4773&numbers=800-939-2033";
+				$(window).trigger("hashchange");
+
+				expect(Person.phoneNumbers.length).toBe(2)
+				expect(Person.phoneNumbers).toContain("801-442-4773")
+				expect(Person.phoneNumbers).toContain("800-939-2033")
+			});
+
+			it("should bind multiple values to multiple keys of the hash", function() {
+				// We may want to change this if ever want support for rails/php
+				Person.firstName = "";
+				Person.lastName = ""
+				Person.phoneNumbers = [ "801-442-4773", "800-939-2033" ];
+				if (!Watch) Person.save();
+
+				expect(window.location.hash).toBe("#numbers=801-442-4773&numbers=800-939-2033")
+			});
+
+			xit("should only trigger update once", function() {
+				binder = Controller.binders[7];
+				spyOn(binder, "update").andCallThrough();
+
+				Person.firstName = "Eric";
+				if (!Watch) Person.save();
+
+				expect(binder.update.calls.length).toEqual(1);
+			});
+
+			xit("should only trigger change once", function() {
+				binder = Controller.binders[7];
+				spyOn(binder, "change").andCallThrough();
+
+				Person.firstName = "Eric";
+				if (!Watch) Person.save();
+
+				expect(binder.change.calls.length).toEqual(1);
+			});
+		};
+
+		describe("with bindings", function() {
+			beforeEach(function() {
+				window.location.hash = "";
+
+				PersonController.include({
+					bindings: {
+						"hash firstName": "firstName",
+						"hash last": "lastName",
+						"hash numbers": "phoneNumbers"
+					}
+				});
+
+				Watch = false;
+				Person = PersonCollection.create({ 
+					firstName: "Nathan", 
+					lastName: "Palmer",
+					title: "Mr"
+				});
+
+				Controller = PersonController.init({ el: 'body', model:Person });
+			});
+
+			Tests();	
+		});
+
+		describe("with bindings and watch", function() {
+			beforeEach(function() {
+				window.location.hash = "";
+
+				PersonController.include({
+					bindings: {
+						"hash firstName": "firstName",
+						"hash last": "lastName",
+						"hash numbers": "phoneNumbers"
+					}
+				});
+				
+				Watch = true;
+				PersonCollection.include(Spine.Watch);
+				Person = PersonCollection.create({ 
+					firstName: "Nathan", 
+					lastName: "Palmer",
+					phoneNumbers: [ "555-555-1010", "555-101-9999" ],
+					title: "Mr"
+				});
+
+				Controller = PersonController.init({ el: 'body', model:Person });
+			});
+
+			Tests();	
+		});
+	});
 });

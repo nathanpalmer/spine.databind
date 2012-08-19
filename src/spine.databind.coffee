@@ -334,6 +334,74 @@ class Checked extends Template
 	
 		el.trigger("change") if changed
 
+class Hash extends Template
+	keys: [ "hash" ]
+
+	@clean: ->
+		return if window.location.hash[0] is "#" then window.location.hash.substr(1) else window.location.hash
+
+	@parse: ->
+		string = Hash.clean()
+		hash = {}
+		for item in string.split("&")
+			continue if item is ""
+			parts = item.split("=")
+			key = decodeURIComponent(parts[0])
+			value = decodeURIComponent(parts[1])
+			continue if not value
+
+			if hash[key]
+				hash[key] = [hash[key]]
+				hash[key].push(value)
+			else
+				hash[key] = value
+
+		hash
+
+	enabled: true
+
+	disable: (callback) ->
+		if @enabled
+			@enabled = false
+			try
+				do callback
+			catch e
+				throw e
+			finally
+				@enabled = true
+		else
+			do callback
+
+	bind: (operators,model,controller,el,options) ->
+		@bindToElement(operators,model,controller,$(window),options,"hashchange")
+
+		if options.watch
+			@bindToModel([operator],model,controller,el,options,"update["+operator.property+"]") for operator in operators
+		else
+			@bindToModel(operators,model,controller,el,options,"change")
+
+	update: (operators,model,controller,el,options) ->
+		return if not @enabled
+
+		hash = Hash.parse()
+
+		for operator in operators
+			value = @get(model,operator.property)
+			if value
+				hash[operator.target] = value
+			else
+				delete hash[operator.target]
+
+		string = $.param(hash).replace(/%5B%5D/g,"") # Replacing [] with blank, this could be controversial
+		if string isnt Hash.clean()
+			window.location.hash = string
+			$(window).trigger("hashchange")
+		@
+
+	change: (operators,model,controller,el,options) ->
+		hash = Hash.parse()
+		@disable => @set(model,operator.property,hash[operator.target]) for operator in operators
+
 DataBind =
 	binders: [ 
 		new Update()
@@ -343,6 +411,7 @@ DataBind =
 		new Visible()
 		new Attribute()
 		new Checked()
+		new Hash()
 	]
 
 	refreshBindings: (model) ->
@@ -386,6 +455,7 @@ DataBind =
 				name: info.name
 				parameters: info.parameters
 				property: property
+				target: info.target
 			})
 
 		parse = (key) ->
@@ -393,20 +463,21 @@ DataBind =
 			if match isnt null
 				name = match[1]
 				parameters = match[2]
-				selector = match[3]
+				target = match[3]
 			else
 				name = key
-				selector = ""
+				target = ""
 
-			if selector is ""
+			if target is ""
 				selector = controller.el
 			else
-				selector = controller.el.find(selector)
+				selector = controller.el.find(target)
 
 			return {
 				name: name
 				parameters: parameters
 				element: selector
+				target: target
 			}
 
 		bindToModel = (element) ->
