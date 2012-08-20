@@ -431,7 +431,8 @@ class Cookie extends Template
 	keys: [ "cookie" ]
 
 	@get: (sKey) ->
-		unescape(document.cookie.replace(new RegExp("(?:^|.*;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*"), "$1"))
+		regex = new RegExp("(?:^|.*;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*")
+		return unescape(document.cookie.replace(regex, "$1")) if regex.test(document.cookie)
 
 	@set: (sKey, sValue, vEnd, sPath, sDomain, bSecure) ->
 		return if not sKey or /^(?:expires|max\-age|path|domain|secure)$/i.test(sKey)
@@ -458,7 +459,7 @@ class Cookie extends Template
 	update: (operators,model,controller,el,options) ->
 		for operator in operators
 			value = @get(model,operator.property)
-			Cookie.set(operator.target,value)
+			Cookie.set(operator.target,value) if value and value isnt "undefined"
 
 	change: (operators,model,controller,el,options) ->
 		for operator in operators

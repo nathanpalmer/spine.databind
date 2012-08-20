@@ -755,7 +755,11 @@
     Cookie.prototype.keys = ["cookie"];
 
     Cookie.get = function(sKey) {
-      return unescape(document.cookie.replace(new RegExp("(?:^|.*;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*"), "$1"));
+      var regex;
+      regex = new RegExp("(?:^|.*;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*");
+      if (regex.test(document.cookie)) {
+        return unescape(document.cookie.replace(regex, "$1"));
+      }
     };
 
     Cookie.set = function(sKey, sValue, vEnd, sPath, sDomain, bSecure) {
@@ -800,7 +804,11 @@
       for (_i = 0, _len = operators.length; _i < _len; _i++) {
         operator = operators[_i];
         value = this.get(model, operator.property);
-        _results.push(Cookie.set(operator.target, value));
+        if (value && value !== "undefined") {
+          _results.push(Cookie.set(operator.target, value));
+        } else {
+          _results.push(void 0);
+        }
       }
       return _results;
     };
