@@ -81,7 +81,7 @@
       return Update.__super__.constructor.apply(this, arguments);
     }
 
-    Update.prototype.keys = ["text", "value"];
+    Update.prototype.keys = ["text", "value", "html"];
 
     Update.prototype.bind = function(operators, model, controller, el, options) {
       var operator, _i, _len;
@@ -124,7 +124,7 @@
       var binder;
       binder = this;
       el.each(function() {
-        var e, operator, value, _i, _len;
+        var e, formatted, operator, value, _i, _len;
         e = $(this);
         for (_i = 0, _len = operators.length; _i < _len; _i++) {
           operator = operators[_i];
@@ -145,11 +145,16 @@
               break;
             default:
               if (typeof value === "object" && value && value.constructor === Array) {
-                e.text(value.join(","));
+                formatted = value.join(",");
               } else if (typeof value === "object" && value) {
-                e.text(value.toString());
+                formatted = value.toString();
               } else {
-                e.text(value);
+                formatted = value;
+              }
+              if (operator.name === "html") {
+                e.html(formatted);
+              } else {
+                e.text(formatted);
               }
           }
         }

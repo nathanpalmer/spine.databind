@@ -12,7 +12,8 @@ describe("Spine.DataBind", function() {
 			"companies",
 			"person",
 			"title",
-			"homepage"
+			"homepage",
+			"rawHtml"
 		);
 
 		PersonController = Spine.Controller.sub();
@@ -159,7 +160,7 @@ describe("Spine.DataBind", function() {
 					expect(Person.constructor._callbacks["update[firstName]"].length).toBe(1);
 				} else {
 					Person.bind("change", function() { console.log("update"); });
-					expect(Person.constructor._callbacks["change"].length).toBe(6);
+					expect(Person.constructor._callbacks["change"].length).toBe(7);
 					Controller.destroyBindings();
 					expect(Person.constructor._callbacks["change"].length).toBe(1);
 				}
@@ -175,9 +176,9 @@ describe("Spine.DataBind", function() {
 					expect(Person.constructor._callbacks["update[firstName]"].length).toBe(6);
 				} else {
 					Person.bind("change", function() { console.log("update"); });
-					expect(Person.constructor._callbacks["change"].length).toBe(6);
+					expect(Person.constructor._callbacks["change"].length).toBe(7);
 					Controller.refreshBindings(Person);
-					expect(Person.constructor._callbacks["change"].length).toBe(6);
+					expect(Person.constructor._callbacks["change"].length).toBe(7);
 				}
 			});
 
@@ -194,7 +195,7 @@ describe("Spine.DataBind", function() {
 				if (Watch) {
 					expect(Person.constructor._callbacks["update[firstName]"].length).toBe(current+5);
 				} else {
-					expect(Person.constructor._callbacks["change"].length).toBe(current+5);
+					expect(Person.constructor._callbacks["change"].length).toBe(current+6);
 				}
 			});
 
@@ -221,6 +222,14 @@ describe("Spine.DataBind", function() {
 
 				expect(binder.change).not.toHaveBeenCalled();
 			});
+
+			it("should set unescaped html with the html binder", function() {
+				Person.rawHtml = "<p>Paragraph</p>";
+				if (!Watch) Person.save();
+
+				var rawHtml = $('#rawHtml');
+				expect(rawHtml.html()).toBe("<p>Paragraph</p>");
+			});
 		};
 
 		describe("with bindings", function() {
@@ -230,7 +239,8 @@ describe("Spine.DataBind", function() {
 					"<div id='firstNameDiv'/>",
 					"<input type='text' id='firstName'/>",
 					"<input type='textarea' id='firstNameTextArea'/>",
-					"<select id='firstNameSelect'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>"
+					"<select id='firstNameSelect'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>",
+					"<div id='rawHtml'/>"
 				].join(""));
 
 				PersonController.include({
@@ -239,7 +249,8 @@ describe("Spine.DataBind", function() {
 						"text #firstNameDiv":"firstName",
 						"value #firstName":"firstName",
 						"value #firstNameTextArea":"firstName",
-						"value #firstNameSelect":"firstName"
+						"value #firstNameSelect":"firstName",
+						"html #rawHtml":"rawHtml"
 					}
 				});
 
@@ -249,7 +260,8 @@ describe("Spine.DataBind", function() {
 						"text #firstNameDiv":"firstName",
 						"value #firstName":"firstName",
 						"value #firstNameTextArea":"firstName",
-						"value #firstNameSelect":"firstName"
+						"value #firstNameSelect":"firstName",
+						"html #rawHtml":"rawHtml"
 					}
 				});
 
@@ -268,7 +280,8 @@ describe("Spine.DataBind", function() {
 					"<div id='firstNameDiv'/>",
 					"<input type='text' id='firstName'/>",
 					"<input type='textarea' id='firstNameTextArea'/>",
-					"<select id='firstNameSelect'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>"
+					"<select id='firstNameSelect'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>",
+					"<div id='rawHtml'/>"
 				].join(""));
 
 				PersonController.include({
@@ -277,7 +290,8 @@ describe("Spine.DataBind", function() {
 						"text #firstNameDiv":"firstName",
 						"value #firstName":"firstName",
 						"value #firstNameTextArea":"firstName",
-						"value #firstNameSelect":"firstName"
+						"value #firstNameSelect":"firstName",
+						"html #rawHtml":"rawHtml"
 					}
 				});
 
@@ -307,7 +321,8 @@ describe("Spine.DataBind", function() {
 					"<div id='firstNameDiv' data-bind='text: firstName'/>",
 					"<input type='text' id='firstName' data-bind='value: firstName'/>",
 					"<input type='textarea' id='firstNameTextArea' data-bind='value: firstName'/>",
-					"<select id='firstNameSelect' data-bind='value: firstName'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>"
+					"<select id='firstNameSelect' data-bind='value: firstName'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>",
+					"<div id='rawHtml' data-bind='html: rawHtml'/>"
 				].join(""));
 
 				Watch = false;
@@ -325,7 +340,8 @@ describe("Spine.DataBind", function() {
 					"<div id='firstNameDiv' data-bind='text: firstName'/>",
 					"<input type='text' id='firstName' data-bind='value: firstName'/>",
 					"<input type='textarea' id='firstNameTextArea' data-bind='value: firstName'/>",
-					"<select id='firstNameSelect' data-bind='value: firstName'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>"
+					"<select id='firstNameSelect' data-bind='value: firstName'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>",
+					"<div id='rawHtml' data-bind='html: rawHtml'/>"
 				].join(""));
 
 				Watch = true;

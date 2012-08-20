@@ -39,7 +39,7 @@ class Template
 			model[property] = value
 
 class Update extends Template
-	keys: [ "text", "value" ]
+	keys: [ "text", "value", "html" ]
 
 	bind: (operators,model,controller,el,options) ->
 		@bindToElement(operators,model,controller,el,options)
@@ -82,11 +82,16 @@ class Update extends Template
 						e.find("option[value=#{value}]").attr("selected","selected")
 					else
 						if typeof value is "object" and value and value.constructor is Array
-							e.text(value.join(","))
+							formatted = value.join(",")
 						else if typeof value is "object" and value
-							e.text(value.toString())
+							formatted = value.toString()
 						else
-							e.text(value)
+							formatted = value
+
+						if operator.name is "html"
+							e.html(formatted)
+						else
+							e.text(formatted)
 				
 			@
 		@
