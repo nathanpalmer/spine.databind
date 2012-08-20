@@ -373,14 +373,33 @@ class Hash extends Template
 			do callback
 
 	bind: (operators,model,controller,el,options) ->
-		@bindToElement(operators,model,controller,$(window),options,"hashchange")
+		if not @hashbind
+			@hashbind = (() ->
+				bindings = []
+
+				$(window).bind("hashchange.spine-databind", binder = =>
+					hash = Hash.parse()
+					for binding in bindings
+						binding(hash)
+				)
+
+				controller.bind("destroy-bindings", unbinder = (record) =>
+					$(window).unbind("hashchange.spine-databind", binder)
+					controller.unbind("destroy-bindings", unbinder)
+				)
+
+				(operators,model,controller,el,options) ->
+					bindings.push((hash) => @change(operators,model,controller,el,options,hash))
+			)()
+
+		@hashbind(operators,model,controller,el,options)
 
 		if options.watch
 			@bindToModel([operator],model,controller,el,options,"update["+operator.property+"]") for operator in operators
 		else
 			@bindToModel(operators,model,controller,el,options,"change")
 
-	update: (operators,model,controller,el,options) ->
+	update: (operators,model,controller,el,options,hash) ->
 		return if not @enabled
 
 		hash = Hash.parse()
@@ -398,8 +417,8 @@ class Hash extends Template
 			$(window).trigger("hashchange")
 		@
 
-	change: (operators,model,controller,el,options) ->
-		hash = Hash.parse()
+	change: (operators,model,controller,el,options,hash) ->
+		# hash = Hash.parse()
 		@disable => @set(model,operator.property,hash[operator.target]) for operator in operators
 
 DataBind =

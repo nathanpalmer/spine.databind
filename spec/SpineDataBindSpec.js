@@ -1397,16 +1397,13 @@ describe("Spine.DataBind", function() {
 				expect(window.location.hash).toBe("#numbers=801-442-4773&numbers=800-939-2033")
 			});
 
-			xit("should only trigger update once", function() {
-				binder = Controller.binders[7];
-				spyOn(binder, "update").andCallThrough();
-
-				Person.firstName = "Eric";
-				if (!Watch) Person.save();
-
-				expect(binder.update.calls.length).toEqual(1);
+			it("should only bind to hashchange once", function() {
+				expect($(window).data("events")["hashchange"].length).toEqual(1);
 			});
 
+			// So technically this gets called for every property
+			// on the model. But it's ok since it only parses once per
+			// the previous test.
 			xit("should only trigger change once", function() {
 				binder = Controller.binders[7];
 				spyOn(binder, "change").andCallThrough();

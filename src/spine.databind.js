@@ -659,7 +659,34 @@
 
     Hash.prototype.bind = function(operators, model, controller, el, options) {
       var operator, _i, _len, _results;
-      this.bindToElement(operators, model, controller, $(window), options, "hashchange");
+      if (!this.hashbind) {
+        this.hashbind = (function() {
+          var binder, bindings, unbinder,
+            _this = this;
+          bindings = [];
+          $(window).bind("hashchange.spine-databind", binder = function() {
+            var binding, hash, _i, _len, _results;
+            hash = Hash.parse();
+            _results = [];
+            for (_i = 0, _len = bindings.length; _i < _len; _i++) {
+              binding = bindings[_i];
+              _results.push(binding(hash));
+            }
+            return _results;
+          });
+          controller.bind("destroy-bindings", unbinder = function(record) {
+            $(window).unbind("hashchange.spine-databind", binder);
+            return controller.unbind("destroy-bindings", unbinder);
+          });
+          return function(operators, model, controller, el, options) {
+            var _this = this;
+            return bindings.push(function(hash) {
+              return _this.change(operators, model, controller, el, options, hash);
+            });
+          };
+        })();
+      }
+      this.hashbind(operators, model, controller, el, options);
       if (options.watch) {
         _results = [];
         for (_i = 0, _len = operators.length; _i < _len; _i++) {
@@ -672,8 +699,8 @@
       }
     };
 
-    Hash.prototype.update = function(operators, model, controller, el, options) {
-      var hash, operator, string, value, _i, _len;
+    Hash.prototype.update = function(operators, model, controller, el, options, hash) {
+      var operator, string, value, _i, _len;
       if (!this.enabled) {
         return;
       }
@@ -695,10 +722,8 @@
       return this;
     };
 
-    Hash.prototype.change = function(operators, model, controller, el, options) {
-      var hash,
-        _this = this;
-      hash = Hash.parse();
+    Hash.prototype.change = function(operators, model, controller, el, options, hash) {
+      var _this = this;
       return this.disable(function() {
         var operator, _i, _len, _results;
         _results = [];
