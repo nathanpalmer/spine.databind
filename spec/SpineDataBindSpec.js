@@ -1467,4 +1467,42 @@ describe("Spine.DataBind", function() {
 			Tests();	
 		});
 	});
+
+	describe("Cookie", function() {
+		var Tests = function() {
+			it("should set the property from a cookie", function() {
+				expect(Person.firstName).toBe("Eric");
+			});
+
+			it("should set the cookie when model gets updated", function() {
+				Person.firstName = "Bender";
+				if (!Watch) Person.save();
+
+				expect(document.cookie).toBe("firstName=Bender");
+			});
+		};
+
+		describe("with bindings", function() {
+			beforeEach(function() {
+				document.cookie = "firstName=Eric"
+
+				PersonController.include({
+					bindings: {
+						"cookie firstName": "firstName",
+					}
+				});
+
+				Watch = false;
+				Person = PersonCollection.create({ 
+					firstName: "Nathan", 
+					lastName: "Palmer",
+					title: "Mr"
+				});
+
+				Controller = PersonController.init({ el: 'body', model:Person });
+			});
+
+			Tests();
+		});
+	});
 });

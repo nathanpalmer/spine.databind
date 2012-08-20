@@ -419,6 +419,45 @@ class Hash extends Template
 	change: (operators,model,controller,el,options,hash) ->
 		@disable => @set(model,operator.property,hash[operator.target]) for operator in operators
 
+class Cookie extends Template
+	keys: [ "cookie" ]
+
+	@get: (sKey) ->
+		unescape(document.cookie.replace(new RegExp("(?:^|.*;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*"), "$1"))
+
+	@set: (sKey, sValue, vEnd, sPath, sDomain, bSecure) ->
+		return if not sKey or /^(?:expires|max\-age|path|domain|secure)$/i.test(sKey)
+		sExpires = ""
+		if vEnd?
+			switch vEnd.constructor
+				when Number
+					sExpires = if vEnd is Infinity then "; expires=Tue, 19 Jan 2038 03:14:07 GMT" else "; max-age=" + vEnd
+				when String
+					sExpires = "; expires=" + vEnd
+				when Date
+					sExpires = "; expires=" + vEnd.toGMTString()
+
+		document.cookie = escape(sKey) + "=" + escape(sValue) + sExpires + (if sDomain then "; domain=" + sDomain else "") + (if sPath then "; path=" + sPath else "") + (if bSecure then "; secure" else "")
+
+	bind: (operators,model,controller,el,options) ->
+		if options.watch
+			@bindToModel([operator],model,controller,el,options,"update["+operator.property+"]") for operator in operators
+		else
+			@bindToModel(operators,model,controller,el,options,"change")
+
+		@change(operators,model,controller,el,options)
+
+	update: (operators,model,controller,el,options) ->
+		for operator in operators
+			value = @get(model,operator.property)
+			Cookie.set(operator.target,value)
+
+	change: (operators,model,controller,el,options) ->
+		for operator in operators
+			value = Cookie.get(operator.target)
+			binder.set(model,operator.property,value,options)
+
+
 DataBind =
 	binders: [ 
 		new Update()
@@ -429,6 +468,7 @@ DataBind =
 		new Attribute()
 		new Checked()
 		new Hash()
+		new Cookie()
 	]
 
 	refreshBindings: (model) ->
