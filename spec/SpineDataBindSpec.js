@@ -1257,7 +1257,7 @@ describe("Spine.DataBind", function() {
 	});
 
 	describe("Radio", function() {
-		var Person;
+		var Person, Controller;
 
 		var Tests = function() {
 			it("should bind to mr", function() {
@@ -1370,6 +1370,8 @@ describe("Spine.DataBind", function() {
 	});
 
 	describe("Hash", function() {
+		var Person, Controller;
+
 		var Tests = function() {
 			it("should set hash when model changes", function() {
 				Person.firstName = "Eric";
@@ -1485,6 +1487,8 @@ describe("Spine.DataBind", function() {
 	});
 
 	describe("Cookie", function() {
+		var Person, Controller;
+
 		var Tests = function() {
 			it("should set the property from a cookie", function() {
 				expect(Person.firstName).toBe("Eric");
@@ -1500,11 +1504,84 @@ describe("Spine.DataBind", function() {
 
 		describe("with bindings", function() {
 			beforeEach(function() {
+				document.cookie = "lastName=; expires=Thu, 01 Jan 1970 00:00:00 GMT"
 				document.cookie = "firstName=Eric"
 
 				PersonController.include({
 					bindings: {
 						"cookie firstName": "firstName",
+					}
+				});
+
+				Watch = false;
+				Person = PersonCollection.create({ 
+					firstName: "Nathan", 
+					lastName: "Palmer",
+					title: "Mr"
+				});
+
+				Controller = PersonController.init({ el: 'body', model:Person });
+			});
+
+			Tests();
+		});
+	});
+
+	describe("Cookie & Hash", function() {
+		var Person, Controller;
+
+		var Tests = function() {
+			it("should read cookie first then override with hash", function() {
+				expect(Person.firstName).toBe("Bender");
+			});
+		};
+
+		describe("with bindings", function() {
+			beforeEach(function() {
+				document.cookie = "firstName=Eric;"
+				document.cookie = "lastName=; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+				window.location.hash = "#firstName=Bender&lastName=Rogers"
+
+				PersonController.include({
+					bindings: {
+						"cookie firstName": "firstName",
+						"hash firstName": "firstName",
+					}
+				});
+
+				Watch = false;
+				Person = PersonCollection.create({ 
+					firstName: "Nathan", 
+					lastName: "Palmer",
+					title: "Mr"
+				});
+
+				Controller = PersonController.init({ el: 'body', model:Person });
+			});
+
+			Tests();
+		});
+	});
+
+	describe("Hash & Cookie", function() {
+		var Person, Controller;
+
+		var Tests = function() {
+			it("should read hash first then override with cookie", function() {
+				expect(Person.lastName).toBe("Boris");
+			});
+		};
+
+		describe("with bindings", function() {
+			beforeEach(function() {
+				document.cookie = "firstName=; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+				document.cookie = "lastName=Boris;"
+				window.location.hash = "#firstName=Bender&lastName=Rogers"
+
+				PersonController.include({
+					bindings: {
+						"hash lastName": "lastName",
+						"cookie lastName": "lastName",
 					}
 				});
 

@@ -403,6 +403,9 @@ class Hash extends Template
 		else
 			@bindToModel(operators,model,controller,el,options,"change")
 
+		hash = Hash.parse()
+		@change(operators,model,controller,el,options,hash)
+
 	update: (operators,model,controller,el,options,hash) ->
 		return if not @enabled
 
@@ -445,12 +448,12 @@ class Cookie extends Template
 		document.cookie = escape(sKey) + "=" + escape(sValue) + sExpires + (if sDomain then "; domain=" + sDomain else "") + (if sPath then "; path=" + sPath else "") + (if bSecure then "; secure" else "")
 
 	bind: (operators,model,controller,el,options) ->
+		@change(operators,model,controller,el,options)
+
 		if options.watch
 			@bindToModel([operator],model,controller,el,options,"update["+operator.property+"]") for operator in operators
 		else
 			@bindToModel(operators,model,controller,el,options,"change")
-
-		@change(operators,model,controller,el,options)
 
 	update: (operators,model,controller,el,options) ->
 		for operator in operators

@@ -663,7 +663,7 @@
     };
 
     Hash.prototype.bind = function(operators, model, controller, el, options) {
-      var operator, _i, _len, _results;
+      var hash, operator, _i, _len;
       if (!this.hashbind) {
         this.hashbind = (function() {
           var binder, bindings, unbinder,
@@ -693,15 +693,15 @@
       }
       this.hashbind(operators, model, controller, el, options);
       if (options.watch) {
-        _results = [];
         for (_i = 0, _len = operators.length; _i < _len; _i++) {
           operator = operators[_i];
-          _results.push(this.bindToModel([operator], model, controller, el, options, "update[" + operator.property + "]"));
+          this.bindToModel([operator], model, controller, el, options, "update[" + operator.property + "]");
         }
-        return _results;
       } else {
-        return this.bindToModel(operators, model, controller, el, options, "change");
+        this.bindToModel(operators, model, controller, el, options, "change");
       }
+      hash = Hash.parse();
+      return this.change(operators, model, controller, el, options, hash);
     };
 
     Hash.prototype.update = function(operators, model, controller, el, options, hash) {
@@ -780,16 +780,18 @@
     };
 
     Cookie.prototype.bind = function(operators, model, controller, el, options) {
-      var operator, _i, _len;
+      var operator, _i, _len, _results;
+      this.change(operators, model, controller, el, options);
       if (options.watch) {
+        _results = [];
         for (_i = 0, _len = operators.length; _i < _len; _i++) {
           operator = operators[_i];
-          this.bindToModel([operator], model, controller, el, options, "update[" + operator.property + "]");
+          _results.push(this.bindToModel([operator], model, controller, el, options, "update[" + operator.property + "]"));
         }
+        return _results;
       } else {
-        this.bindToModel(operators, model, controller, el, options, "change");
+        return this.bindToModel(operators, model, controller, el, options, "change");
       }
-      return this.change(operators, model, controller, el, options);
     };
 
     Cookie.prototype.update = function(operators, model, controller, el, options) {
