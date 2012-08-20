@@ -124,7 +124,7 @@
       var binder;
       binder = this;
       el.each(function() {
-        var e, formatted, operator, value, _i, _len;
+        var e, formatted, isSelected, operator, shouldBeSelected, value, _i, _len;
         e = $(this);
         for (_i = 0, _len = operators.length; _i < _len; _i++) {
           operator = operators[_i];
@@ -138,10 +138,15 @@
               }
               break;
             case "SELECT":
-              e.find("option[selected]").each(function(key, element) {
-                return $(element).removeAttr("selected");
-              });
-              e.find("option[value=" + value + "]").attr("selected", "selected");
+              isSelected = e.find(":not(option[value=" + value + "]):selected");
+              shouldBeSelected = e.find("option[value=" + value + "]:not(:selected)");
+              if (isSelected.length > 0 || shouldBeSelected.length > 0) {
+                isSelected.each(function(key, element) {
+                  return $(element).removeAttr("selected");
+                });
+                shouldBeSelected.attr("selected", "selected");
+                e.trigger("change");
+              }
               break;
             default:
               if (typeof value === "object" && value && value.constructor === Array) {
@@ -154,7 +159,10 @@
               if (operator.name === "html") {
                 e.html(formatted);
               } else {
-                e.text(formatted);
+                if (e.text() !== formatted) {
+                  e.text(formatted);
+                  e.trigger("change");
+                }
               }
           }
         }

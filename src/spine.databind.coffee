@@ -77,9 +77,15 @@ class Update extends Template
 							e.trigger("change") 
 					when "SELECT"
 						# Deselect
-						e.find("option[selected]").each((key,element) -> $(element).removeAttr("selected"))
-						# Select
-						e.find("option[value=#{value}]").attr("selected","selected")
+						isSelected = e.find(":not(option[value=#{value}]):selected")
+						shouldBeSelected = e.find("option[value=#{value}]:not(:selected)")
+
+						if isSelected.length > 0 or shouldBeSelected.length > 0
+							isSelected.each((key,element) -> $(element).removeAttr("selected"))
+							# Select
+							shouldBeSelected.attr("selected","selected")
+							# Changed
+							e.trigger("change") 
 					else
 						if typeof value is "object" and value and value.constructor is Array
 							formatted = value.join(",")
@@ -91,7 +97,9 @@ class Update extends Template
 						if operator.name is "html"
 							e.html(formatted)
 						else
-							e.text(formatted)
+							if e.text() isnt formatted
+								e.text(formatted)
+								e.trigger("change")
 				
 			@
 		@
