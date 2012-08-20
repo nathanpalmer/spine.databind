@@ -463,7 +463,7 @@ class Cookie extends Template
 	change: (operators,model,controller,el,options) ->
 		for operator in operators
 			value = Cookie.get(operator.target)
-			binder.set(model,operator.property,value,options)
+			@set(model,operator.property,value,options)
 
 
 DataBind =

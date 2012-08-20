@@ -811,7 +811,7 @@
       for (_i = 0, _len = operators.length; _i < _len; _i++) {
         operator = operators[_i];
         value = Cookie.get(operator.target);
-        _results.push(binder.set(model, operator.property, value, options));
+        _results.push(this.set(model, operator.property, value, options));
       }
       return _results;
     };
