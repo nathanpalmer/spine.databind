@@ -379,8 +379,7 @@ class Hash extends Template
 
 				$(window).bind("hashchange.spine-databind", binder = =>
 					hash = Hash.parse()
-					for binding in bindings
-						binding(hash)
+					binding(hash) for binding in bindings
 				)
 
 				controller.bind("destroy-bindings", unbinder = (record) =>
@@ -418,7 +417,6 @@ class Hash extends Template
 		@
 
 	change: (operators,model,controller,el,options,hash) ->
-		# hash = Hash.parse()
 		@disable => @set(model,operator.property,hash[operator.target]) for operator in operators
 
 DataBind =
