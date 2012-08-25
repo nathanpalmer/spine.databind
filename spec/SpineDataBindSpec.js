@@ -370,6 +370,8 @@ describe("Spine.DataBind", function() {
 			it("should update options when model is changed", function() {
 				// Spine.Watch cannot current detect changes to an array
 				//Person.phoneNumbers.push("555-199-0030");
+				Person.phoneNumbersSelected = [];
+				if (!Watch) Person.save();
 				Person.phoneNumbers = [ "555-555-1010", "555-101-9999", "555-199-0030" ];
 				if (!Watch) Person.save();
 				var phoneNumberSelect = $('#phoneNumbers');
@@ -385,8 +387,8 @@ describe("Spine.DataBind", function() {
 				var phoneNumberSelect = $('#phoneNumbers');
 				phoneNumberSelect.find("option[value='555-101-9999']").attr("selected", "selected");
 				phoneNumberSelect.trigger("change");
-				expect(Person.phoneNumbersSelected.length).toBe(1);
-				expect(Person.phoneNumbersSelected[0]).toBe(Person.phoneNumbers[1]);
+				//expect(Person.phoneNumbersSelected.length).toBe(1);
+				expect(Person.phoneNumbersSelected).toBe(Person.phoneNumbers[1]);
 			});
 
 			it("should update selectedOptions when model is changed", function() {
@@ -411,7 +413,13 @@ describe("Spine.DataBind", function() {
 					'<option value="1">Apple</option>',
 					'<option value="0">Google</option>'
 				].join("");
-				expect(companySelect.html()).toBe(companyHtml);
+
+				elements = companySelect.find("option")
+				expect($(elements[0]).attr("selected")).toBe("selected")
+				expect($(elements[1]).attr("selected")).toBe(undefined)
+				expect($(elements[2]).attr("selected")).toBe(undefined)
+
+				// expect(companySelect.html()).toBe(companyHtml);
 			});
 
 			it("should bind hashes and selectedOptions", function() {
@@ -434,10 +442,10 @@ describe("Spine.DataBind", function() {
 					Controller.destroyBindings();
 					expect(Person.constructor._callbacks["update[phoneNumbers]"].length).toBe(1);
 				} else {
-					Person.bind("update", function() { console.log("update"); });
-					expect(Person.constructor._callbacks["update"].length).toBe(3);
+					Person.bind("change", function() { console.log("change"); });
+					expect(Person.constructor._callbacks["change"].length).toBe(5);
 					Controller.destroyBindings();
-					expect(Person.constructor._callbacks["update"].length).toBe(1);
+					expect(Person.constructor._callbacks["change"].length).toBe(1);
 				}
 			});
 
@@ -454,15 +462,15 @@ describe("Spine.DataBind", function() {
 					Controller.refreshBindings(Person);
 					expect(Person.constructor._callbacks["update[phoneNumbers]"].length).toBe(2);
 				} else {
-					Person.bind("update", function() { console.log("update"); });
-					expect(Person.constructor._callbacks["update"].length).toBe(3);
+					Person.bind("change", function() { console.log("change"); });
+					expect(Person.constructor._callbacks["change"].length).toBe(5);
 					Controller.refreshBindings(Person);
-					expect(Person.constructor._callbacks["update"].length).toBe(3);
+					expect(Person.constructor._callbacks["change"].length).toBe(5);
 				}
 			});
 
 			it("should bind element to change", function() {
-				binder = Controller.binders[1];
+				binder = Controller.binders[2];
 				spyOn(binder, "change");
 
 				var phoneNumberSelect = $('#phoneNumbers');
@@ -641,12 +649,12 @@ describe("Spine.DataBind", function() {
 			});
 
 			it("should bind element to click", function() {
-				binder = Controller.binders[2];
-				spyOn(binder, "change");
+				binder = Controller.binders[3];
+				spyOn(binder, "execute");
 
 				$('#reset').click();
 
-				expect(binder.change).toHaveBeenCalled();
+				expect(binder.execute).toHaveBeenCalled();
 			});
 
 			it("should unbind element when destroyed", function() {
@@ -878,10 +886,10 @@ describe("Spine.DataBind", function() {
 					Controller.destroyBindings();
 					expect(Person.constructor._callbacks["update[phoneNumberCount]"].length).toBe(1);
 				} else {
-					Person.bind("update", function() { console.log("update"); });
-					expect(Person.constructor._callbacks["update"].length).toBe(2);
+					Person.bind("change", function() { console.log("change"); });
+					expect(Person.constructor._callbacks["change"].length).toBe(2);
 					Controller.destroyBindings();
-					expect(Person.constructor._callbacks["update"].length).toBe(1);
+					expect(Person.constructor._callbacks["change"].length).toBe(1);
 				}
 			});
 
@@ -892,10 +900,10 @@ describe("Spine.DataBind", function() {
 					Controller.refreshBindings(Person);
 					expect(Person.constructor._callbacks["update[phoneNumberCount]"].length).toBe(2);
 				} else {
-					Person.bind("update", function() { console.log("update"); });
-					expect(Person.constructor._callbacks["update"].length).toBe(2);
+					Person.bind("change", function() { console.log("change"); });
+					expect(Person.constructor._callbacks["change"].length).toBe(2);
 					Controller.refreshBindings(Person);
-					expect(Person.constructor._callbacks["update"].length).toBe(2);
+					expect(Person.constructor._callbacks["change"].length).toBe(2);
 				}
 			});
 		};
@@ -1026,10 +1034,10 @@ describe("Spine.DataBind", function() {
 					Controller.destroyBindings();
 					expect(Person.constructor._callbacks["update[homepage]"].length).toBe(1);
 				} else {
-					Person.bind("update", function() { console.log("update"); });
-					expect(Person.constructor._callbacks["update"].length).toBe(2);
+					Person.bind("change", function() { console.log("change"); });
+					expect(Person.constructor._callbacks["change"].length).toBe(2);
 					Controller.destroyBindings();
-					expect(Person.constructor._callbacks["update"].length).toBe(1);
+					expect(Person.constructor._callbacks["change"].length).toBe(1);
 				}
 			});
 
@@ -1040,10 +1048,10 @@ describe("Spine.DataBind", function() {
 					Controller.refreshBindings(Person);
 					expect(Person.constructor._callbacks["update[homepage]"].length).toBe(2);
 				} else {
-					Person.bind("update", function() { console.log("update"); });
-					expect(Person.constructor._callbacks["update"].length).toBe(2);
+					Person.bind("change", function() { console.log("change"); });
+					expect(Person.constructor._callbacks["change"].length).toBe(2);
 					Controller.refreshBindings(Person);
-					expect(Person.constructor._callbacks["update"].length).toBe(2);
+					expect(Person.constructor._callbacks["change"].length).toBe(2);
 				}
 			});
 		};
@@ -1061,7 +1069,7 @@ describe("Spine.DataBind", function() {
 
 				PersonController.include({
 					bindings: {
-						"attr a":'{ "href": "homepage" }'
+						"attr #homepage":'{ "href": "homepage" }'
 					}
 				});
 
@@ -1152,7 +1160,7 @@ describe("Spine.DataBind", function() {
 			});
 
 			it("should bind element to change", function() {
-				binder = Controller.binders[6];
+				binder = Controller.binders[7];
 				spyOn(binder, "change");
 
 				var person = $('#person');
@@ -1163,7 +1171,7 @@ describe("Spine.DataBind", function() {
 			});
 
 			it("should unbind element when destroyed", function() {
-				binder = Controller.binders[6];
+				binder = Controller.binders[7];
 				spyOn(binder, "change");
 
 				Controller.destroyBindings();
@@ -1422,14 +1430,14 @@ describe("Spine.DataBind", function() {
 			// So technically this gets called for every property
 			// on the model. But it's ok since it only parses once per
 			// the previous test.
-			xit("should only trigger change once", function() {
+			it("should only trigger change once", function() {
 				binder = Controller.binders[7];
 				spyOn(binder, "change").andCallThrough();
 
 				Person.firstName = "Eric";
 				if (!Watch) Person.save();
 
-				expect(binder.change.calls.length).toEqual(1);
+				expect(binder.change.calls.length).toEqual(0);
 			});
 		};
 

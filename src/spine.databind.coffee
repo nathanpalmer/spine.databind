@@ -1,342 +1,200 @@
 Spine      = @Spine
-Controller = Spine.Controller
 
-class Template
-	keys: [ ]
-
-	bind: (operators,model,controller,el,options) ->
-	unbind: (operators,model,controller,el,options) ->
-
-	bindToModel: (operators,model,controller,el,options,event = "update") ->
-		model.constructor.bind(event, binder = () => @update(operators,model,controller,el,options))
-		controller.bind("destroy-bindings", unbinder = (record) =>
-			#if record && model.eql(record)
-			model.constructor.unbind(event,binder)
-			controller.unbind("destroy-bindings", unbinder)
-		)
-
-	bindToElement: (operators,model,controller,el,options,event = "change") ->
-		el.bind(event+".spine-databind", binder = () => @change(operators,model,controller,el,options))
-		controller.bind("destroy-bindings", unbinder = (record) =>
-			el.unbind(event+".spine-databind", binder)
-			controller.unbind("destroy-bindings", unbinder)
-		)
-
-	get: (item,value,callback) ->
-		if typeof item[value] is "function"
-			result = item[value](callback)
-		else
-			result = item[value]
-		result
-
-	set: (model,property,value,options) ->
-		# Functions are read-only
-		return if typeof model[property] is "function"
-
-		if !options or options.save
-			model.updateAttribute(property,value)
-		else
-			model[property] = value
-
-class Update extends Template
-	keys: [ "text", "value", "html" ]
-
-	bind: (operators,model,controller,el,options) ->
-		@bindToElement(operators,model,controller,el,options)
-
-		if options.watch
-			@bindToModel([operator],model,controller,el,options,"update["+operator.property+"]") for operator in operators
-		else
-			@bindToModel(operators,model,controller,el,options,"change")
-
-		@update(operators,model,controller,el,options)
- 
-	change: (operators,model,controller,el,options) ->
-		binder = @
-		el.each () ->
-			e = $(@)
-			for operator in operators
-				switch @tagName
-					when "INPUT", "SELECT", "TEXTAREA"
-						binder.set(model,operator.property,e.val(), options)
-					else
-						binder.set(model,operator.property,e.text(), options)
-			@
-		@
-
-	update: (operators,model,controller,el,options) ->
-		binder = @
-		el.each () ->
-			e = $(@)
-			for operator in operators
-				value = binder.get(model,operator.property)
-				switch @tagName
-					when "INPUT", "TEXTAREA"
-						if e.val() isnt value
-							e.val(value)
-							e.trigger("change") 
-					when "SELECT"
-						# Deselect
-						isSelected = e.find(":not(option[value=#{value}]):selected")
-						shouldBeSelected = e.find("option[value=#{value}]:not(:selected)")
-
-						if isSelected.length > 0 or shouldBeSelected.length > 0
-							isSelected.each((key,element) -> $(element).removeAttr("selected"))
-							# Select
-							shouldBeSelected.attr("selected","selected")
-							# Changed
-							e.trigger("change") 
-					else
-						if typeof value is "object" and value and value.constructor is Array
-							formatted = value.join(",")
-						else if typeof value is "object" and value
-							formatted = value.toString()
-						else
-							formatted = value
-
-						if operator.name is "html"
-							e.html(formatted)
-						else
-							if e.text() isnt formatted
-								e.text(formatted)
-								e.trigger("change")
-				
-			@
-		@
-
-class Options extends Template
-	keys: [ "options", "selectedOptions" ]
-
-	bind: (operators,model,controller,el,options) ->
-		if options.watch
-			ops = operators.filter((e) -> e.name is "options")
-			opsSelected = operators.filter((e) -> e.name is "selectedOptions")
-			together = ops.concat(opsSelected)
-			
-			# ops
-			@bindToModel(together,model,controller,el,options,"update["+ops[0].property+"]") if ops and ops.length is 1
-			@bindToModel(together,model,controller,el,options,"update["+opsSelected[0].property+"]") if opsSelected and opsSelected.length is 1
-		else
-			@bindToModel(operators,model,controller,el,options,"update")
-
-		if operators.some((e) -> e.name is "selectedOptions")
-			@bindToElement(operators,model,controller,el,options)
-
-		@update(operators,model,controller,el,options)
-
-	update: (operators,model,controller,el,options) ->
-		ops = operators.filter((e) -> e.name is "options")
-		opsSelected = operators.filter((e) -> e.name is "selectedOptions")
-		selectedOptions = if opsSelected.length is 1 then @get(model,opsSelected[0].property) else [] 
-		selectedOptions = [selectedOptions] if not (selectedOptions instanceof Array)
-
-		process = (array) ->
-			options = el.children('option')
-
-			if not array
-				result = el.find("option").map((index,item) -> return { text: $(item).text(), value: $(item).val() })
-			else if array instanceof Array
-				result = ({ text: item, value: item} for item in array)
+class ElementBound
+	bind: (controller,key,target,change,execute) ->
+		return if typeof @event is "undefined"
+		target.bind(@event+".spine-databind", binder = (event) =>
+			if typeof @get is "undefined"
+				@execute(execute)
 			else
-			    result = Object.keys(array)
-			                   .map((r) => { text: array[r], value: r })
-			                   .sort((a,b) => 
-			                   		if (b.value == "")
-			                   			return 1
-			                   		else if (a.value == "")
-			                   			return -1
-			                   		else
-			                   			return a.text.localeCompare(b.text)
-			                   	)
-
-			count = 0
-			count = count = count + 1 for own property in result
-			changed = false
-
-			for item,index in result
-				option = if options.length > index then $(options[index]) else null
-				if (!isNaN(item.value-0) and selectedOptions.indexOf((item.value-0)) >= 0) or
-				   selectedOptions.indexOf(item.value) >= 0
-					selected = "selected='selected'"
-				else
-					selected = ""
-
-				if option is null
-					el.append "<option value='#{item.value}' #{selected}>#{item.text}</option>"
-					changed = true
-				else
-					option.text(item.text) if option.text() isnt item.text
-					option.val(item.value) if option.val?() isnt item.value
-					if option.attr("selected") is "selected" or option.attr("selected") is true
-						if selected.length is 0
-							option.removeAttr("selected")
-							changed = true
-					else
-						if selected.length > 0
-							option.attr("selected","selected")
-							changed = true
-
-			if options.length > count
-				for index in [count..options.length]
-					$(options[index]).remove()
-					changed = true
-
-			el.trigger("change") if changed						
-
-		array = if ops.length is 1 then @get(model,ops[0].property,process) else null
-
-		process(array) if typeof array isnt "function"
-
-	change: (operators,model,controller,el,options) ->
-		operator = operators.filter((e) -> e.name is "selectedOptions")[0]
-		
-		items = []
-		el.find("option:selected").each(() ->
-			items.push($(this).val())
+				@change(key,target,change)
+		)
+		controller.bind("destroy-bindings", unbinder = (record) =>
+			target.unbind(@event+".spine-databind", binder)
+			controller.unbind("destroy-bindings", unbinder)
 		)
 
-		value = @get(model,operator.property)
+	change: (key,target,callback) ->
+		callback(target,@get(key,target))
 
-		if value instanceof Array or items.length > 1
-			newValue = []
-			newValue = newValue.concat(items)
+	# This might seem silly but it's here for 
+	# testing purposes (need to make sure it gets called)
+	# and I can't test the execute on controller
+	execute: (callback) ->
+		callback()
+
+	# get: (key,target) ->
+	# set: (key,target,value) ->
+
+class Update extends ElementBound
+	keys: [ "text", "value", "html" ]
+	event: "change"
+
+	get: (key,target) ->
+		e = $(target[0])
+		switch e[0].tagName
+			when "INPUT", "SELECT", "TEXTAREA"
+				return e.val()
+			else
+				return e.text()
+
+	set: (key,target,value) ->
+		e = $(target[0])
+		switch e[0].tagName
+			when "INPUT", "TEXTAREA"
+				if e.val() isnt value
+					e.val(value)
+					e.trigger("change") 
+			when "SELECT"
+				# Deselect
+				isSelected = e.find(":not(option[value=#{value}]):selected")
+				shouldBeSelected = e.find("option[value=#{value}]:not(:selected)")
+
+				if isSelected.length > 0 or shouldBeSelected.length > 0
+					isSelected.each((key,element) -> $(element).removeAttr("selected"))
+					# Select
+					shouldBeSelected.attr("selected","selected")
+					# Changed
+					e.trigger("change") 
+			else
+				if typeof value is "object" and value and value.constructor is Array
+					formatted = value.join(",")
+				else if typeof value is "object" and value
+					formatted = value.toString()
+				else
+					formatted = value
+
+				if key is "html"
+					e.html(formatted)
+				else
+					if e.text() isnt formatted
+						e.text(formatted)
+						e.trigger("change")
+
+class Options extends ElementBound
+	keys: [ "options" ]
+
+	set: (key,target,value) ->
+		array = value
+		options = target.children('option')
+
+		if not array
+			result = target.find("option").map((index,item) -> return { text: $(item).text(), value: $(item).val() })
+		else if array instanceof Array
+			result = ({ text: item, value: item} for item in array)
 		else
-			if items.length is 1
-				newValue = items[0]
+		    result = Object.keys(array)
+		                   .map((r) => { text: array[r], value: r })
+		                   .sort((a,b) => 
+		                   		if (b.value == "")
+		                   			return 1
+		                   		else if (a.value == "")
+		                   			return -1
+		                   		else
+		                   			return a.text.localeCompare(b.text)
+		                   	)
 
-		@set(model, operator.property, newValue, options)
+		count = 0
+		count = count = count + 1 for own property in result
+		changed = false
 
-class Click extends Template
+		for item,index in result
+			option = if options.length > index then $(options[index]) else null
+			selected = ""
+
+			if option is null
+				target.append "<option value='#{item.value}' #{selected}>#{item.text}</option>"
+				changed = true
+			else
+				option.text(item.text) if option.text() isnt item.text
+				option.val(item.value) if option.val?() isnt item.value
+
+		if options.length > count
+			for index in [count..options.length]
+				$(options[index]).remove()
+				changed = true
+
+		return true if changed
+		return false
+
+class SelectedOptions extends ElementBound
+	keys: [ "selectedOptions" ]
+	event: "change"
+
+	get: (key,target) ->
+		items = []
+		target.find("option").filter(":selected").each(() -> items.push($(@).val()))
+		console.log("get",key,target.selector, target.find("option").filter(":selected"), items)
+		if items.length is 1
+			return items[0]
+		else
+			return items
+
+	set: (key,target,value) ->
+		console.log("set",key,target.selector,value)
+		value = [] if not value?
+		value = [value] if not Spine.isArray(value)
+		target.find("option").filter(":selected").each(() ->
+			val = $(@).val()
+			return if value.indexOf(val) >= 0
+			$(@).removeAttr("selected")
+		)
+		for v in value
+			target.find("option[value='"+v+"']").attr("selected","selected")
+
+class Click extends ElementBound
 	keys: [ "click" ]
+	event: "click"
 
-	bind: (operators,model,controller,el,options) ->
-		@bindToElement(operators,model,controller,el,options,"click")
-
-	change: (operators,model,controller,el,options) ->
-		binder = @
-		for operator in operators
-			binder.get(model,operator.property)
-
-class Enable extends Template
+class Enable extends ElementBound
 	keys: [ "enable" ]
 
-	bind: (operators,model,controller,el,options) ->
-		if options.watch
-			@bindToModel([operator],model,controller,el,options,"update["+operator.property+"]") for operator in operators
+	set: (key,target,value) ->
+		if value
+			target.removeAttr("disabled")
 		else
-			@bindToModel(operators,model,controller,el,options,"change")
+			target.attr("disabled","disabled")
 
-		@update(operators,model,controller,el,options)
-
-	update: (operators,model,controller,el,options) ->
-		operator = operators.filter((e) -> e.name is "enable")[0]
-		result = @get(model,operator.property)
-
-		if result
-			el.removeAttr("disabled")
-		else
-			el.attr("disabled","disabled")
-
-class Visible extends Template
+class Visible extends ElementBound
 	keys: [ "visible" ]
 
-	bind: (operators,model,controller,el,options) ->
-		if options.watch
-			@bindToModel([operator],model,controller,el,options,"update["+operator.property+"]") for operator in operators
+	set: (key,target,value) ->
+		if value
+			target.show()
 		else
-			@bindToModel(operators,model,controller,el,options,"update")
+			target.hide()
 
-		@update(operators,model,controller,el,options)
-
-	update: (operators,model,controller,el,options) ->
-		operator = operators.filter((e) -> e.name is "visible")[0]
-		result = @get(model,operator.property)
-
-		if result
-			el.show()
-		else
-			el.hide()
-
-class Attribute extends Template
+class Attribute extends ElementBound
 	keys: [ "attr" ]
 
-	bind: (operators,model,controller,el,options) ->
-		if options.watch
-			for operator in operators
-				json = JSON.parse(operator.property)
-				for own property of json
-					@bindToModel([operator],model,controller,el,options,"update["+json[property]+"]") 
-		else
-			@bindToModel(operators,model,controller,el,options,"update")
+	set: (key,target,value,property) ->
+		if target.attr(property) isnt value
+			target.attr(property,value)
+			return true
 
-		@update(operators,model,controller,el,options)
-
-	update: (operators,model,controller,el,options) ->
-		binder = @
-		operator = operators.filter((e) -> e.name is "attr")[0]
-		json = JSON.parse(operator.property)
-		for own property of json
-			value = binder.get(model,json[property])
-			if el.attr(property) isnt value
-				el.attr(property,value)
-				el.trigger("change")
-		@
-
-class Checked extends Template
+class Checked extends ElementBound
 	keys: [ "checked" ]
+	event: "change"
 
-	bind: (operators,model,controller,el,options) ->
-		@bindToElement(operators,model,controller,el,options)
-
-		if options.watch
-			@bindToModel([operator],model,controller,el,options,"update["+operator.property+"]") for operator in operators
-		else
-			@bindToModel(operators,model,controller,el,options,"change")
-		
-		@update(operators,model,controller,el,options)
-
-	change: (operators,model,controller,el,options) ->
-		operator = operators.filter((e) -> e.name is "checked")[0]
-		value = @get(model,operator.property)
-
-		if el.attr("type") is "radio"
-			if el.length > 1
-				current = $($.grep(el, (item) -> $(item).is(":checked"))).val()
+	get: (key,target) ->
+		if target.attr("type") is "radio"
+			if target.length > 1
+				current = $($.grep(target, (item) -> $(item).is(":checked"))).val()
 				current = true if current == "true"
 				current = false if current == "false"
-				if value isnt current
-					@set(model,operator.property,current,options)
+				return current
 			else
-				if el.is(":checked")
-					@set(model,operator.property,el.val(),options)
+				if target.is(":checked")
+					return target.val()
 		else
-			if value isnt el.is(":checked")
-				value = el.is(":checked")
-				@set(model,operator.property,value,options)
+			return target.is(":checked")
 
-	update: (operators,model,controller,el,options) ->
-		operator = operators.filter((e) -> e.name is "checked")[0]
-		result = @get(model,operator.property)
+	set: (key,target,value) ->
 		changed = false
-		
-		el.each () ->
-			e = $(@)
-			value = e.val()
-			value = true if value == "true"
-			value = false if value == "false"
 
-			if e.attr("type") is "radio"
-				if result is value
-					if not e.is(":checked")
-						e.attr("checked", "checked")
-						changed = true
-						
-				else 
-					if e.is(":checked")
-						e.removeAttr("checked")
-						changed = true
-			else
-				if result 
+		if target.attr("type") is "radio"
+			check = (e) ->
+				if value is e.val()
 					if not e.is(":checked")
 						e.attr("checked", "checked")
 						changed = true
@@ -344,10 +202,24 @@ class Checked extends Template
 					if e.is(":checked")
 						e.removeAttr("checked")
 						changed = true
-	
-		el.trigger("change") if changed
 
-class Hash extends Template
+			if target.length > 1
+				check($(element)) for element in target
+			else
+				check(target)
+		else
+			if value 
+				if not target.is(":checked")
+					target.attr("checked", "checked")
+					changed = true
+			else
+				if target.is(":checked")
+					target.removeAttr("checked")
+					changed = true
+		
+		return changed
+
+class Hash 
 	keys: [ "hash" ]
 
 	@clean: ->
@@ -359,8 +231,8 @@ class Hash extends Template
 		for item in string.split("&")
 			continue if item is ""
 			parts = item.split("=")
-			key = decodeURIComponent(parts[0])
-			value = decodeURIComponent(parts[1])
+			key = decodeURIComponent(parts[0]).replace(/\+/g," ")
+			value = decodeURIComponent(parts[1]).replace(/\+/g," ")
 			continue if not value
 
 			if hash[key]
@@ -371,9 +243,9 @@ class Hash extends Template
 
 		hash
 
-	enabled: true
+	@enabled: true
 
-	disable: (callback) ->
+	@disable: (callback) ->
 		if @enabled
 			@enabled = false
 			try
@@ -385,7 +257,7 @@ class Hash extends Template
 		else
 			do callback
 
-	bind: (operators,model,controller,el,options) ->
+	bind: (controller,key,target,change,execute) ->
 		if not @hashbind
 			@hashbind = (() ->
 				bindings = []
@@ -400,42 +272,38 @@ class Hash extends Template
 					controller.unbind("destroy-bindings", unbinder)
 				)
 
-				(operators,model,controller,el,options) ->
-					bindings.push((hash) => @change(operators,model,controller,el,options,hash))
+				(controller,key,target,change,execute) ->
+					bindings.push((hash) => @change(controller,key,target,change,execute,hash))
 			)()
 
-		@hashbind(operators,model,controller,el,options)
+		@hashbind(controller,key,target,change,execute)
 
-		if options.watch
-			@bindToModel([operator],model,controller,el,options,"update["+operator.property+"]") for operator in operators
+		hash = Hash.parse()
+		@change(controller,key,target,change,execute,hash,true)
+
+	set: (key,target,value) ->
+		hash = Hash.parse()
+
+		if value
+			hash[target] = value
 		else
-			@bindToModel(operators,model,controller,el,options,"change")
-
-		hash = Hash.parse()
-		@change(operators,model,controller,el,options,hash)
-
-	update: (operators,model,controller,el,options,hash) ->
-		return if not @enabled
-
-		hash = Hash.parse()
-
-		for operator in operators
-			value = @get(model,operator.property)
-			if value
-				hash[operator.target] = value
-			else
-				delete hash[operator.target]
+			delete hash[target]
 
 		string = $.param(hash).replace(/%5B%5D/g,"") # Replacing [] with blank, this could be controversial
 		if string isnt Hash.clean()
 			window.location.hash = string
-			$(window).trigger("hashchange")
+			$.log("Changing hash to " + string) if window.DebugLevel >= 3
+			# $(window).trigger("hashchange")
 		@
 
-	change: (operators,model,controller,el,options,hash) ->
-		@disable => @set(model,operator.property,hash[operator.target]) for operator in operators
+	change: (controller,key,target,change,execute,hash) ->
+		return if not Hash.enabled
 
-class Cookie extends Template
+		Hash.disable => 
+			value = hash[target]
+			change(target, value)
+
+class Cookie 
 	keys: [ "cookie" ]
 
 	@get: (sKey) ->
@@ -456,29 +324,121 @@ class Cookie extends Template
 
 		document.cookie = escape(sKey) + "=" + escape(sValue) + sExpires + (if sDomain then "; domain=" + sDomain else "") + (if sPath then "; path=" + sPath else "") + (if bSecure then "; secure" else "")
 
-	bind: (operators,model,controller,el,options) ->
-		@change(operators,model,controller,el,options)
+	bind: (controller,key,target,change,execute) ->
+		@change(controller,key,target,change,execute,true)
 
-		if options.watch
-			@bindToModel([operator],model,controller,el,options,"update["+operator.property+"]") for operator in operators
+	set: (key,target,value) ->
+		Cookie.set(target,value) if value and value isnt "undefined"
+
+	change: (controller,key,target,change,execute,initial) ->
+		value = Cookie.get(target)
+		change(target, value)
+
+class Controller extends Spine.Module
+	@include Spine.Log
+
+	changed: []
+
+	constructor: (args) ->
+		super
+
+		isJSON = (str) ->
+			return false if str.length is 0
+			str = str.replace(/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g, '@')
+			str = str.replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']')
+			str = str.replace(/(?:^|:|,)(?:\s*\[)+/g, '')
+			return (/^[\],:{}\s]*$/).test(str)
+	
+		@json         = args.instance.property if typeof args.instance.property is "object"
+		if isJSON(args.instance.property)
+			@json  	  = JSON.parse(args.instance.property)
 		else
-			@bindToModel(operators,model,controller,el,options,"change")
+			@property = args.instance.property
+		@binders      = args.instance.binders
+		@model        = args.model
+		@controller   = args.controller
+		@options      = args.options
 
-	update: (operators,model,controller,el,options) ->
-		for operator in operators
-			value = @get(model,operator.property)
-			Cookie.set(operator.target,value) if value and value isnt "undefined"
+		for binder in @binders
+			binder.instance.bind(@controller,binder.key,binder.target,@change,@execute)
 
-	change: (operators,model,controller,el,options) ->
-		for operator in operators
-			value = Cookie.get(operator.target)
-			@set(model,operator.property,value,options)
+			if @options.watch
+				if @json?
+					@bind("update[#{@json[property]}]", @update) for own property of @json
+				else
+					@bind("update[#{@property}]", @update)
+			else
+				@bind("change", @update)
+				@bind("save", => 
+					change.trigger("changed") for change in @changed when typeof change isnt "string"
+					@changed = []
+				)
 
+		@update(@model)
+
+	get: (property = @property, callback) ->
+		if typeof @model[property] is "function"
+			result = @model[property](callback)
+		else
+			result = @model[property]
+		result
+
+	set: (value) ->
+		# Functions are read-only
+		return if typeof @model[@property] is "function"
+
+		if !@options or @options.save
+			@model.updateAttribute(@property,value)
+		else
+			@model[@property] = value
+
+	bind: (event,callback) ->
+		@model.constructor.bind(event, binder = (record) => callback(record))
+		@controller.bind("destroy-bindings", unbinder = (record) =>
+			@model.constructor.unbind(event,binder)
+			@controller.unbind("destroy-bindings", unbinder)
+		)
+
+	eql: (first,second) ->
+		if Spine.isArray(first)
+			return false if not Spine.isArray(second)
+			return false if first.length isnt second.length
+			for value,index in first
+				return false if value isnt second[index]
+			return true
+
+		return false if first isnt second
+		return true
+
+	update: (record) =>
+		current = {}
+
+		set = (property,value) =>
+			current[property] = @get(property) if typeof current[property] is "undefined"
+			binder.instance.set(binder.key,binder.target,current[property],value) 
+
+		for binder in @binders
+			if binder.instance.set?
+				if @json?
+					set(@json[property],property) for own property of @json
+				else
+					set(@property)
+
+	change: (target,value) => 
+		return if typeof value is "undefined"
+		current = @get()
+		if not @eql(current,value)
+			changed = @set(value)
+			@changed.push(target) if changed
+
+	execute: (target) =>
+		@get()
 
 DataBind =
 	binders: [ 
 		new Update()
 		new Options()
+		new SelectedOptions()
 		new Click()
 		new Enable()
 		new Visible()
@@ -510,26 +470,23 @@ DataBind =
 			
 			return null
 
-		addElement = (elements,info,property) ->
+		addElement = (instances,info,property) ->
 			binder = findBinder(info.name)
 			if binder is null then return
 
-			matching = elements.filter((e)->e.el[0] is info.element[0] and e.binder is binder)
-			if matching.length is 0
-				element = 
-					el: info.element
-					binder: binder
-					operators: []
-
-				elements.push(element)
+			findByProperty = instances.filter((e) -> e.property is property)
+			if findByProperty.length is 0
+				instance =
+					property: property
+					binders: []
+				instances.push(instance)
 			else
-				element = matching[0]
+				instance = findByProperty[0]
 
-			element.operators.push({
-				name: info.name
-				parameters: info.parameters
-				property: property
-				target: info.target
+			instance.binders.push({
+				key: info.name
+				target: if info.element.length > 0 then info.element else info.target
+				instance: binder
 			})
 
 		parse = (key) ->
@@ -554,32 +511,25 @@ DataBind =
 				target: target
 			}
 
-		bindToModel = (element) ->
-			operators = element.operators
-			el = element.el
-
-			element.binder.bind(operators,model,controller,el,options)
-			controller.bind "release", ->
-				element.binder.unbind(operators,model,controller,el,options)
-
 		trim = (s) ->
 			s.replace(/^\s+|\s+$/g,"")
 
-		bindingElements = (elements) ->
+		bindingElements = (instances) ->
 			(property) ->
-				elements.filter (element) ->
-					element.operators.some (item) ->
-						item.property is property
+				instances.filter (instance) ->
+					instances.property is property
 				.map (result) ->
-					result.el[0]
+					for binder in result.binders
+						continue if typeof binder.target is "string"
+						return binder.target
 
-		elements = []
+		instances = []
 
 		for key of @bindings
 			if @bindings.hasOwnProperty(key)
 				property = @bindings[key]
 				info = parse(key)
-				addElement(elements,info,property)
+				addElement(instances,info,property)
 		
 		@el.find("*[data-bind]").each () ->
 			e = $(this)
@@ -598,12 +548,23 @@ DataBind =
 			
 			for info in attributes
 				binder = findBinder(info.name)
-				addElement(elements,info,info.value)
+				addElement(instances,info,info.value)
 
-		for element in elements
-			bindToModel(element)
+		initialize = (instance) ->
+			new Controller(controller: controller, model: model, instance: instance, options: options)
 
-		@bindingElements = bindingElements(elements)
+		for instance in instances
+			switch instance.binders.length
+				when 1
+					@log("DataBind", instance.property, instance.binders[0])
+				when 2
+					@log("DataBind", instance.property, instance.binders[0].instance, instance.binders[1].instance)
+				when 3
+					@log("DataBind", instance.property, instance.binders[0].instance, instance.binders[1].instance, instance.binders[2].instance)
+
+			initialize(instance)
+
+		@bindingElements = bindingElements(instances)
 
 		@
 
@@ -612,7 +573,7 @@ DataBind =
 
 DataBind.activators = [ "refreshBindings" ] if Spine.Activator
 
-Controller.DataBind = {}
-Controller.DataBind.Template = Template
+Spine.Controller.DataBind = {}
+Spine.Controller.DataBind.ElementBound = ElementBound
 
 @Spine.DataBind = DataBind
