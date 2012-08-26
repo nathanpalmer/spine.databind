@@ -48,8 +48,8 @@ class Update extends ElementBound
 					e.trigger("change") 
 			when "SELECT"
 				# Deselect
-				isSelected = e.find(":not(option[value=#{value}]):selected")
-				shouldBeSelected = e.find("option[value=#{value}]:not(:selected)")
+				isSelected = e.find(":not(option[value='#{value}']):selected")
+				shouldBeSelected = e.find("option[value='#{value}']:not(:selected)")
 
 				if isSelected.length > 0 or shouldBeSelected.length > 0
 					isSelected.each((key,element) -> $(element).removeAttr("selected"))

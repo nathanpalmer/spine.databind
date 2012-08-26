@@ -160,7 +160,7 @@ describe("Spine.DataBind", function() {
 					expect(Person.constructor._callbacks["update[firstName]"].length).toBe(1);
 				} else {
 					Person.bind("change", function() { console.log("update"); });
-					expect(Person.constructor._callbacks["change"].length).toBe(7);
+					expect(Person.constructor._callbacks["change"].length).toBe(8);
 					Controller.destroyBindings();
 					expect(Person.constructor._callbacks["change"].length).toBe(1);
 				}
@@ -176,9 +176,9 @@ describe("Spine.DataBind", function() {
 					expect(Person.constructor._callbacks["update[firstName]"].length).toBe(6);
 				} else {
 					Person.bind("change", function() { console.log("update"); });
-					expect(Person.constructor._callbacks["change"].length).toBe(7);
+					expect(Person.constructor._callbacks["change"].length).toBe(8);
 					Controller.refreshBindings(Person);
-					expect(Person.constructor._callbacks["change"].length).toBe(7);
+					expect(Person.constructor._callbacks["change"].length).toBe(8);
 				}
 			});
 
@@ -195,7 +195,7 @@ describe("Spine.DataBind", function() {
 				if (Watch) {
 					expect(Person.constructor._callbacks["update[firstName]"].length).toBe(current+5);
 				} else {
-					expect(Person.constructor._callbacks["change"].length).toBe(current+6);
+					expect(Person.constructor._callbacks["change"].length).toBe(current+7);
 				}
 			});
 
@@ -230,6 +230,22 @@ describe("Spine.DataBind", function() {
 				var rawHtml = $('#rawHtml');
 				expect(rawHtml.html()).toBe("<p>Paragraph</p>");
 			});
+
+			it("should bind to select", function() {
+				var companySelect = $('#companySelect');
+				var selected = companySelect.find(":selected");
+				expect(selected.val()).toBe("Spruce Media");
+			});
+
+			it("should bind to select and change on model update", function() {
+				var companySelect = $('#companySelect');
+				
+				Person.company = "America Online";
+				if (!Watch) Person.save();
+
+				var selected = companySelect.find(":selected");
+				expect(selected.val()).toBe("America Online");
+			});
 		};
 
 		describe("with bindings", function() {
@@ -240,6 +256,7 @@ describe("Spine.DataBind", function() {
 					"<input type='text' id='firstName'/>",
 					"<input type='textarea' id='firstNameTextArea'/>",
 					"<select id='firstNameSelect'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>",
+					"<select id='companySelect'><option value='Other'/><option value='Spruce Media'/><option value='America Online'/></select>",
 					"<div id='rawHtml'/>"
 				].join(""));
 
@@ -250,6 +267,7 @@ describe("Spine.DataBind", function() {
 						"value #firstName":"firstName",
 						"value #firstNameTextArea":"firstName",
 						"value #firstNameSelect":"firstName",
+						"value #companySelect":"company",
 						"html #rawHtml":"rawHtml"
 					}
 				});
@@ -261,12 +279,13 @@ describe("Spine.DataBind", function() {
 						"value #firstName":"firstName",
 						"value #firstNameTextArea":"firstName",
 						"value #firstNameSelect":"firstName",
+						"value #companySelect":"company",
 						"html #rawHtml":"rawHtml"
 					}
 				});
 
 				Watch = false;
-				Person = PersonCollection.create({ firstName: "Nathan", lastName: "Palmer" });
+				Person = PersonCollection.create({ firstName: "Nathan", lastName: "Palmer", company: "Spruce Media" });
 				Controller = PersonController.init({ el: 'body', model:Person });
 			});
 
@@ -281,6 +300,7 @@ describe("Spine.DataBind", function() {
 					"<input type='text' id='firstName'/>",
 					"<input type='textarea' id='firstNameTextArea'/>",
 					"<select id='firstNameSelect'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>",
+					"<select id='companySelect'><option value='Other'/><option value='Spruce Media'/><option value='America Online'/></select>",
 					"<div id='rawHtml'/>"
 				].join(""));
 
@@ -291,6 +311,7 @@ describe("Spine.DataBind", function() {
 						"value #firstName":"firstName",
 						"value #firstNameTextArea":"firstName",
 						"value #firstNameSelect":"firstName",
+						"value #companySelect":"company",
 						"html #rawHtml":"rawHtml"
 					}
 				});
@@ -307,7 +328,7 @@ describe("Spine.DataBind", function() {
 
 				Watch = true;
 				PersonCollection.include(Spine.Watch);
-				Person = PersonCollection.create({ firstName: "Nathan", lastName: "Palmer" });
+				Person = PersonCollection.create({ firstName: "Nathan", lastName: "Palmer", company: "Spruce Media" });
 				Controller = PersonController.init({ el: 'body', model:Person });
 			});
 
@@ -322,11 +343,12 @@ describe("Spine.DataBind", function() {
 					"<input type='text' id='firstName' data-bind='value: firstName'/>",
 					"<input type='textarea' id='firstNameTextArea' data-bind='value: firstName'/>",
 					"<select id='firstNameSelect' data-bind='value: firstName'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>",
+					"<select id='companySelect' data-bind='value: company'><option value='Other'/><option value='Spruce Media'/><option value='America Online'/></select>",
 					"<div id='rawHtml' data-bind='html: rawHtml'/>"
 				].join(""));
 
 				Watch = false;
-				Person = PersonCollection.create({ firstName: "Nathan", lastName: "Palmer" });
+				Person = PersonCollection.create({ firstName: "Nathan", lastName: "Palmer", company: "Spruce Media" });
 				Controller = PersonController.init({ el: 'body', model:Person });
 			});
 
@@ -341,12 +363,13 @@ describe("Spine.DataBind", function() {
 					"<input type='text' id='firstName' data-bind='value: firstName'/>",
 					"<input type='textarea' id='firstNameTextArea' data-bind='value: firstName'/>",
 					"<select id='firstNameSelect' data-bind='value: firstName'><option value='Other'/><option value='Nathan'/><option value='Eric'/></select>",
+					"<select id='companySelect' data-bind='value: company'><option value='Other'/><option value='Spruce Media'/><option value='America Online'/></select>",
 					"<div id='rawHtml' data-bind='html: rawHtml'/>"
 				].join(""));
 
 				Watch = true;
 				PersonCollection.include(Spine.Watch);
-				Person = PersonCollection.create({ firstName: "Nathan", lastName: "Palmer" });
+				Person = PersonCollection.create({ firstName: "Nathan", lastName: "Palmer", company: "Spruce Media" });
 				Controller = PersonController.init({ el: 'body', model:Person });
 			});
 

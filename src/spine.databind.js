@@ -81,8 +81,8 @@
           }
           break;
         case "SELECT":
-          isSelected = e.find(":not(option[value=" + value + "]):selected");
-          shouldBeSelected = e.find("option[value=" + value + "]:not(:selected)");
+          isSelected = e.find(":not(option[value='" + value + "']):selected");
+          shouldBeSelected = e.find("option[value='" + value + "']:not(:selected)");
           if (isSelected.length > 0 || shouldBeSelected.length > 0) {
             isSelected.each(function(key, element) {
               return $(element).removeAttr("selected");
