@@ -1378,7 +1378,7 @@ describe("Spine.DataBind", function() {
 	});
 
 	describe("Hash", function() {
-		var Person, Controller;
+		var Person, Controller, Hash;
 
 		var Tests = function() {
 			it("should set hash when model changes", function() {
@@ -1387,30 +1387,63 @@ describe("Spine.DataBind", function() {
 				Person.phoneNumbers = undefined;
 				if (!Watch) Person.save();
 
-				expect(window.location.hash).toBe("#firstName=Eric");
+				waitsFor(function() {
+					return Hash.event.time === null
+				}, 10000);
+				
+				runs(function() {
+					expect(window.location.hash).toBe("#firstName=Eric");
+				});
 			});
 
 			it("should set model when hash changes", function() {
+				var parsed = false;
+				Person.bind("hashcomplete", function() { parsed = true; });
+
 				window.location.hash = "#firstName=Eric";
 				$(window).trigger("hashchange");
 
-				expect(Person.firstName).toBe("Eric");
+				waitsFor(function() {
+					return parsed === true;
+				}, 5000);
+
+				runs(function() {
+					expect(Person.firstName).toBe("Eric");
+				});
 			});
 
 			it("does not need to have the same target name as property", function() {
+				var parsed = false;
+				Person.bind("hashcomplete", function() { parsed = true; });
+
 				window.location.hash = "#last=Bender";
 				$(window).trigger("hashchange");
 
-				expect(Person.lastName).toBe("Bender");
+				waitsFor(function() {
+					return parsed === true;
+				}, 5000);
+
+				runs(function() { 
+					expect(Person.lastName).toBe("Bender");
+				});
 			});
 
 			it("should bind multiple values to an array", function() {
+				var parsed = false;
+				Person.bind("hashcomplete", function() { parsed = true; });
+
 				window.location.hash = "#numbers=801-442-4773&numbers=800-939-2033";
 				$(window).trigger("hashchange");
 
-				expect(Person.phoneNumbers.length).toBe(2)
-				expect(Person.phoneNumbers).toContain("801-442-4773")
-				expect(Person.phoneNumbers).toContain("800-939-2033")
+				waitsFor(function() {
+					return parsed === true;
+				}, 5000);
+
+				runs(function() {
+					expect(Person.phoneNumbers.length).toBe(2)
+					expect(Person.phoneNumbers).toContain("801-442-4773")
+					expect(Person.phoneNumbers).toContain("800-939-2033")
+				});
 			});
 
 			it("should bind multiple values to multiple keys of the hash", function() {
@@ -1420,7 +1453,13 @@ describe("Spine.DataBind", function() {
 				Person.phoneNumbers = [ "801-442-4773", "800-939-2033" ];
 				if (!Watch) Person.save();
 
-				expect(window.location.hash).toBe("#numbers=801-442-4773&numbers=800-939-2033")
+				waitsFor(function() {
+					return Hash.event.time === null
+				}, 10000);
+
+				runs(function() {
+					expect(window.location.hash).toBe("#numbers=801-442-4773&numbers=800-939-2033")
+				});
 			});
 
 			it("should only bind to hashchange once", function() {
@@ -1431,7 +1470,7 @@ describe("Spine.DataBind", function() {
 			// on the model. But it's ok since it only parses once per
 			// the previous test.
 			it("should only trigger change once", function() {
-				binder = Controller.binders[7];
+				binder = Controller.binders[8];
 				spyOn(binder, "change").andCallThrough();
 
 				Person.firstName = "Eric";
@@ -1448,8 +1487,8 @@ describe("Spine.DataBind", function() {
 				PersonController.include({
 					bindings: {
 						"hash firstName": "firstName",
-						"hash last": "lastName",
-						"hash numbers": "phoneNumbers"
+						"hash last"     : "lastName",
+						"hash numbers"  : "phoneNumbers"
 					}
 				});
 
@@ -1461,6 +1500,7 @@ describe("Spine.DataBind", function() {
 				});
 
 				Controller = PersonController.init({ el: 'body', model:Person });
+				Hash = Controller.binders[8];
 			});
 
 			Tests();	
@@ -1488,6 +1528,7 @@ describe("Spine.DataBind", function() {
 				});
 
 				Controller = PersonController.init({ el: 'body', model:Person });
+				Hash = Controller.binders[8];
 			});
 
 			Tests();	
@@ -1575,7 +1616,43 @@ describe("Spine.DataBind", function() {
 		var Person, Controller;
 
 		var Tests = function() {
-			it("should read hash first then override with cookie", function() {
+			it("should always read cookie first then override with hash", function() {
+				expect(Person.lastName).toBe("Rogers");
+			});
+		};
+
+		describe("with bindings", function() {
+			beforeEach(function() {
+				document.cookie = "firstName=; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+				document.cookie = "lastName=Boris;"
+				window.location.hash = "#firstName=Bender&lastName=Rogers"
+
+				PersonController.include({
+					bindings: {
+						"hash lastName": "lastName",
+						"cookie lastName": "lastName",
+					}
+				});
+
+				Watch = false;
+				Person = PersonCollection.create({ 
+					firstName: "Nathan", 
+					lastName: "Palmer",
+					title: "Mr"
+				});
+
+				Controller = PersonController.init({ el: 'body', model:Person });
+			});
+
+			Tests();
+		});
+	});
+
+	xdescribe("Cookie priority", function() {
+		var Person, Controller;
+
+		var Tests = function() {
+			it("when hash changes to blank the model updates", function() {
 				expect(Person.lastName).toBe("Boris");
 			});
 		};

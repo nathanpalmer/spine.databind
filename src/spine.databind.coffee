@@ -1,7 +1,8 @@
 Spine      = @Spine
 
 class ElementBound
-	bind: (controller,key,target,change,execute) ->
+	priority: 3
+	bind: (controller,model,key,target,change,execute) ->
 		return if typeof @event is "undefined"
 		target.bind(@event+".spine-databind", binder = (event) =>
 			if typeof @get is "undefined"
@@ -124,14 +125,12 @@ class SelectedOptions extends ElementBound
 	get: (key,target) ->
 		items = []
 		target.find("option").filter(":selected").each(() -> items.push($(@).val()))
-		console.log("get",key,target.selector, target.find("option").filter(":selected"), items)
 		if items.length is 1
 			return items[0]
 		else
 			return items
 
 	set: (key,target,value) ->
-		console.log("set",key,target.selector,value)
 		value = [] if not value?
 		value = [value] if not Spine.isArray(value)
 		target.find("option").filter(":selected").each(() ->
@@ -219,8 +218,47 @@ class Checked extends ElementBound
 		
 		return changed
 
+class HashTimer extends Spine.Module
+	time: null
+
+	start: (begin,forItem,end) ->
+		@begin = begin
+		@forItem = forItem
+		@end = end
+
+		@time = new Date()
+		@items = []
+		setTimeout(@process, 100)
+
+	finish: ->
+		@time = null
+		@begin = null
+		@forItem = null
+		@end = null
+
+	defer: (target,value) ->
+		@items.push({target,value})
+		@time = new Date()
+
+	process: =>
+		if (new Date-@time) < 500
+			setTimeout(@process, 100)
+			return
+
+		hash = @begin()
+		for item in @items
+			hash = @forItem(hash, item.target, item.value)
+		@end(hash)
+
+		@finish()
+
 class Hash 
 	keys: [ "hash" ]
+	priority: 2
+	last: null
+	# start: null
+
+	event: new HashTimer()
 
 	@clean: ->
 		return if window.location.hash[0] is "#" then window.location.hash.substr(1) else window.location.hash
@@ -243,68 +281,79 @@ class Hash
 
 		hash
 
-	@enabled: true
-
-	@disable: (callback) ->
-		if @enabled
-			@enabled = false
-			try
-				do callback
-			catch e
-				throw e
-			finally
-				@enabled = true
-		else
-			do callback
-
-	bind: (controller,key,target,change,execute) ->
+	bind: (controller,model,key,target,change,execute) ->
 		if not @hashbind
 			@hashbind = (() ->
 				bindings = []
+				models = []
 
 				$(window).bind("hashchange.spine-databind", binder = =>
+					if Hash.last? and Hash.last is Hash.clean()
+						Hash.last = null
+						return 
+
+					m.trigger("hashparse") for m in models
+
 					hash = Hash.parse()
 					binding(hash) for binding in bindings
+					
+					m.trigger("hashcomplete") for m in models
 				)
 
-				controller.bind("destroy-bindings", unbinder = (record) =>
-					$(window).unbind("hashchange.spine-databind", binder)
-					controller.unbind("destroy-bindings", unbinder)
-				)
+				(controller,model,key,target,change,execute) ->
+					found = false
+					for m in models
+						found = true if m.constructor is model.constructor
 
-				(controller,key,target,change,execute) ->
+					models.push(model) if not found
+
+						# controller.bind("destroy-bindings", unbinder = (record) =>
+						# 	$(window).unbind("hashchange.spine-databind")
+						# 	controller.unbind("destroy-bindings", unbinder)
+						# )
+
 					bindings.push((hash) => @change(controller,key,target,change,execute,hash))
 			)()
 
-		@hashbind(controller,key,target,change,execute)
+		@hashbind(controller,model,key,target,change,execute)
 
 		hash = Hash.parse()
 		@change(controller,key,target,change,execute,hash,true)
 
 	set: (key,target,value) ->
-		hash = Hash.parse()
+		if @event.time?
+			@event.defer(target,value)
+			return
 
-		if value
-			hash[target] = value
-		else
-			delete hash[target]
+		begin = ->
+			hash = Hash.parse()
+			hash
 
-		string = $.param(hash).replace(/%5B%5D/g,"") # Replacing [] with blank, this could be controversial
-		if string isnt Hash.clean()
-			window.location.hash = string
-			$.log("Changing hash to " + string) if window.DebugLevel >= 3
-			# $(window).trigger("hashchange")
-		@
+		forItem = (hash,target,value) ->
+			if value
+				hash[target] = value
+			else
+				delete hash[target]
+			hash
+
+		end = (hash) ->
+			string = $.param(hash).replace(/%5B%5D/g,"") # Replacing [] with blank, this could be controversial
+			if string isnt Hash.clean()
+				Hash.last = string
+				window.location.hash = string
+
+		@event.start(begin,forItem,end)
 
 	change: (controller,key,target,change,execute,hash) ->
-		return if not Hash.enabled
-
-		Hash.disable => 
-			value = hash[target]
-			change(target, value)
+		value = hash[target]
+		return if not value? or value is ""
+		value = "" if not value?
+		change(target, value)
+		Hash.start = null
 
 class Cookie 
 	keys: [ "cookie" ]
+	priority: 1
 
 	@get: (sKey) ->
 		regex = new RegExp("(?:^|.*;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*")
@@ -324,14 +373,20 @@ class Cookie
 
 		document.cookie = escape(sKey) + "=" + escape(sValue) + sExpires + (if sDomain then "; domain=" + sDomain else "") + (if sPath then "; path=" + sPath else "") + (if bSecure then "; secure" else "")
 
-	bind: (controller,key,target,change,execute) ->
+	bind: (controller,model,key,target,change,execute) ->
 		@change(controller,key,target,change,execute,true)
 
+	get: (key,target) ->
+		Cookie.get(target)
+
 	set: (key,target,value) ->
-		Cookie.set(target,value) if value and value isnt "undefined"
+		current = Cookie.get(target)
+		if value? and value isnt "undefined" and current isnt value
+			Cookie.set(target,value)
+			return true
 
 	change: (controller,key,target,change,execute,initial) ->
-		value = Cookie.get(target)
+		value = @get(key,target)
 		change(target, value)
 
 class Controller extends Spine.Module
@@ -360,9 +415,9 @@ class Controller extends Spine.Module
 		@options      = args.options
 
 		for binder in @binders
-			binder.instance.bind(@controller,binder.key,binder.target,@change,@execute)
+			binder.instance.bind(@controller,@model,binder.key,binder.target,@change(binder.instance),@execute)
 
-			if @options.watch
+			if @options.watch and binder.constructor.name isnt "Hash" # we don't want every property to the url
 				if @json?
 					@bind("update[#{@json[property]}]", @update) for own property of @json
 				else
@@ -376,6 +431,18 @@ class Controller extends Spine.Module
 
 		@update(@model)
 
+	disable: (callback) =>
+		if not @disabled
+			@disabled = true
+			try
+				do callback
+			catch e
+				throw e
+			finally
+				@disabled = false
+		else
+			do callback
+
 	get: (property = @property, callback) ->
 		if typeof @model[property] is "function"
 			result = @model[property](callback)
@@ -387,6 +454,7 @@ class Controller extends Spine.Module
 		# Functions are read-only
 		return if typeof @model[@property] is "function"
 
+		# @disable =>
 		if !@options or @options.save
 			@model.updateAttribute(@property,value)
 		else
@@ -411,23 +479,37 @@ class Controller extends Spine.Module
 		return true
 
 	update: (record) =>
+		return if @disabled
+
 		current = {}
 
-		set = (property,value) =>
+		set = (binder,property,value) =>
 			current[property] = @get(property) if typeof current[property] is "undefined"
+			$.log("DataBind #{binder.instance.constructor.name} updating '#{property}' to '#{current[property]}'") if window.DebugLevel >= 5
 			binder.instance.set(binder.key,binder.target,current[property],value) 
 
 		for binder in @binders
 			if binder.instance.set?
 				if @json?
-					set(@json[property],property) for own property of @json
+					set(binder,@json[property],property) for own property of @json
 				else
-					set(@property)
+					set(binder,@property)
 
-	change: (target,value) => 
+	change: (binder) => (target,value) => 
 		return if typeof value is "undefined"
+		
+		# If the hash is blanked out and a cookie value exists
+		# just ignore the change
+		if value? and value.length is 0 and binder.constructor.name is "Hash"
+			cookie = (b for b in @binders when b.instance.constructor.name is "Cookie")[0]
+			if cookie? and cookie.instance?
+				value = cookie.instance.get(cookie.key, cookie.target)
+
 		current = @get()
 		if not @eql(current,value)
+
+			$.log("DataBind #{binder.constructor.name} changing '#{if typeof target is 'object' then target.selector else target}' to '#{value}'") if window.DebugLevel >= 5
+
 			changed = @set(value)
 			@changed.push(target) if changed
 
@@ -483,11 +565,17 @@ DataBind =
 			else
 				instance = findByProperty[0]
 
-			instance.binders.push({
+			prepared = 
 				key: info.name
 				target: if info.element.length > 0 then info.element else info.target
 				instance: binder
-			})
+
+			index = 0
+			for key,index in instance.binders
+				break if instance.binders[index].instance.priority > binder.priority
+
+			instance.binders.splice(index,0,prepared)
+			
 
 		parse = (key) ->
 			match = key.match(splitter)
@@ -517,11 +605,11 @@ DataBind =
 		bindingElements = (instances) ->
 			(property) ->
 				instances.filter (instance) ->
-					instances.property is property
+					instance.property is property
 				.map (result) ->
 					for binder in result.binders
 						continue if typeof binder.target is "string"
-						return binder.target
+						return binder.target[0]
 
 		instances = []
 
@@ -554,13 +642,14 @@ DataBind =
 			new Controller(controller: controller, model: model, instance: instance, options: options)
 
 		for instance in instances
-			switch instance.binders.length
-				when 1
-					@log("DataBind", instance.property, instance.binders[0])
-				when 2
-					@log("DataBind", instance.property, instance.binders[0].instance, instance.binders[1].instance)
-				when 3
-					@log("DataBind", instance.property, instance.binders[0].instance, instance.binders[1].instance, instance.binders[2].instance)
+			if window.DebugLevel >= 5
+				switch instance.binders.length
+					when 1
+						@log("DataBind", instance.property, instance.binders[0])
+					when 2
+						@log("DataBind", instance.property, instance.binders[0].instance, instance.binders[1].instance)
+					when 3
+						@log("DataBind", instance.property, instance.binders[0].instance, instance.binders[1].instance, instance.binders[2].instance)
 
 			initialize(instance)
 
