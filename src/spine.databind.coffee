@@ -452,8 +452,13 @@ class Controller extends Spine.Module
 		result
 
 	set: (value) ->
-		# Functions can optionally set values
-		@model[@property](value) if typeof @model[@property] is "function" and @model[@property].length is 1
+		if typeof @model[@property] is "function"
+			if @model[@property].length is 1
+				# Functions can optionally set values
+				@model[@property](value)
+			
+			# Otherwise they are read-only
+			return;
 
 		# @disable =>
 		if !@options or @options.save
