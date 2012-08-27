@@ -343,6 +343,7 @@ class Hash
 				window.location.hash = string
 
 		@event.start(begin,forItem,end)
+		@event.defer(target,value)
 
 	change: (controller,key,target,change,execute,hash) ->
 		value = hash[target]
@@ -582,7 +583,7 @@ DataBind =
 			if match isnt null
 				name = match[1]
 				parameters = match[2]
-				target = match[3]
+				target = $.trim(match[3])
 			else
 				name = key
 				target = ""

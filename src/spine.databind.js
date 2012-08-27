@@ -600,7 +600,8 @@
           return window.location.hash = string;
         }
       };
-      return this.event.start(begin, forItem, end);
+      this.event.start(begin, forItem, end);
+      return this.event.defer(target, value);
     };
 
     Hash.prototype.change = function(controller, key, target, change, execute, hash) {
@@ -986,7 +987,7 @@
         if (match !== null) {
           name = match[1];
           parameters = match[2];
-          target = match[3];
+          target = $.trim(match[3]);
         } else {
           name = key;
           target = "";
