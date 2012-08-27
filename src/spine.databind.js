@@ -787,8 +787,8 @@
     };
 
     Controller.prototype.set = function(value) {
-      if (typeof this.model[this.property] === "function") {
-        return;
+      if (typeof this.model[this.property] === "function" && this.model[this.property].length === 1) {
+        this.model[this.property](value);
       }
       if (!this.options || this.options.save) {
         return this.model.updateAttribute(this.property, value);

@@ -8,6 +8,7 @@ describe("Spine.DataBind", function() {
 			"lastName", 
 			"phoneNumbers", 
 			"phoneNumbersSelected",
+			"birthDate",
 			"company",
 			"companies",
 			"person",
@@ -15,6 +16,28 @@ describe("Spine.DataBind", function() {
 			"homepage",
 			"rawHtml"
 		);
+
+		PersonCollection.include({
+			formattedBirthDate: function(value) {
+				if (value !== null && typeof(value) !== "undefined") {
+					// We are setting
+					if (value.indexOf("-") > 0) {
+						// Assuming it's yyyy-MM-dd
+						var parts = value.split("-");
+						var date = new Date(parts[0],parts[1]-1,parts[2])
+						this.birthDate = date.toLocaleDateString()
+					} else {
+						this.birthDate = value;
+					}
+				} else {
+					if (this.birthDate == null || this.birthDate.length == 0)
+						return;
+
+					date = new Date(this.birthDate)
+					return date.getFullYear() + "-" + (date.getMonth()+1) + "-" + date.getDate()
+				}
+			}
+		});
 
 		PersonController = Spine.Controller.sub();
 		PersonController.include(Spine.DataBind);
@@ -1408,6 +1431,7 @@ describe("Spine.DataBind", function() {
 				Person.firstName = "Eric";
 				Person.lastName = ""
 				Person.phoneNumbers = undefined;
+				Person.birthDate = undefined;
 				if (!Watch) Person.save();
 
 				waitsFor(function() {
@@ -1473,6 +1497,7 @@ describe("Spine.DataBind", function() {
 				// We may want to change this if ever want support for rails/php
 				Person.firstName = "";
 				Person.lastName = ""
+				Person.birthDate = undefined;
 				Person.phoneNumbers = [ "801-442-4773", "800-939-2033" ];
 				if (!Watch) Person.save();
 
@@ -1481,7 +1506,7 @@ describe("Spine.DataBind", function() {
 				}, 10000);
 
 				runs(function() {
-					expect(window.location.hash).toBe("#numbers=801-442-4773&numbers=800-939-2033")
+					expect(window.location.hash).toBe("#numbers=801-442-4773&numbers=800-939-2033");
 				});
 			});
 
@@ -1501,6 +1526,38 @@ describe("Spine.DataBind", function() {
 
 				expect(binder.change.calls.length).toEqual(0);
 			});
+
+			it("should display the formatted date", function() {
+				Person.firstName = "";
+				Person.lastName = ""
+				Person.phoneNumbers = [];
+				Person.birthDate = "08/01/2012";
+				if (!Watch) Person.save();
+
+				waitsFor(function() {
+					return Hash.event.time === null
+				}, 10000);
+
+				runs(function() {
+					expect(window.location.hash).toBe("#birth=2012-8-1");
+				});
+			});
+
+			it("should accept a change from a function", function() {
+				var parsed = false;
+				Person.bind("hashcomplete", function() { parsed = true; });
+
+				window.location.hash = "#birth=2012-4-1";
+				$(window).trigger("hashchange");
+
+				waitsFor(function() {
+					return parsed === true;
+				}, 5000);
+
+				runs(function() {
+					expect(Person.birthDate).toBe("04/01/2012")
+				});
+			});
 		};
 
 		describe("with bindings", function() {
@@ -1511,7 +1568,8 @@ describe("Spine.DataBind", function() {
 					bindings: {
 						"hash firstName": "firstName",
 						"hash last"     : "lastName",
-						"hash numbers"  : "phoneNumbers"
+					 	"hash numbers"  : "phoneNumbers",
+					 	"hash birth"    : "formattedBirthDate"
 					}
 				});
 
@@ -1519,7 +1577,8 @@ describe("Spine.DataBind", function() {
 				Person = PersonCollection.create({ 
 					firstName: "Nathan", 
 					lastName: "Palmer",
-					title: "Mr"
+					title: "Mr",
+					birthDate: ""
 				});
 
 				Controller = PersonController.init({ el: 'body', model:Person });
@@ -1536,8 +1595,9 @@ describe("Spine.DataBind", function() {
 				PersonController.include({
 					bindings: {
 						"hash firstName": "firstName",
-						"hash last": "lastName",
-						"hash numbers": "phoneNumbers"
+						"hash last"     : "lastName",
+						"hash numbers"  : "phoneNumbers",
+						"hash birth"    : "formattedBirthDate"
 					}
 				});
 				
@@ -1548,6 +1608,11 @@ describe("Spine.DataBind", function() {
 					lastName: "Palmer",
 					phoneNumbers: [ "555-555-1010", "555-101-9999" ],
 					title: "Mr"
+				});
+
+				Person.bind("update[birthDate]", function() {
+					// You must trigger any dependencies manually
+					this.trigger("update[formattedBirthDate]");
 				});
 
 				Controller = PersonController.init({ el: 'body', model:Person });
